@@ -14,10 +14,39 @@ async function checkUser(req) {
     .eq('id', reqUserId)
     .maybeSingle();
 
-  if (error || !user || !user.approved) {
+  if (error || !user) {
     return null;
   }
   return user;
+}
+
+export async function GET(req) {
+  console.time('API: GET /api/questions');
+  try {
+    const user = await checkUser(req);
+    if (!user) {
+      console.timeEnd('API: GET /api/questions');
+      return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
+    }
+
+    const { data: questions, error } = await supabase
+      .from('questions')
+      .select('id, title, todo_id, difficulty, tags, description, answer, code, explanation, notes')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+
+    console.timeEnd('API: GET /api/questions');
+    return NextResponse.json(questions, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0, must-revalidate'
+      }
+    });
+  } catch (error) {
+    console.error('GET questions error:', error);
+    console.timeEnd('API: GET /api/questions');
+    return NextResponse.json({ message: 'Failed to retrieve questions.' }, { status: 500 });
+  }
 }
 
 export async function POST(req) {
@@ -27,6 +56,10 @@ export async function POST(req) {
     if (!user || (user.role !== 'admin' && !user.can_edit)) {
       console.timeEnd('API: POST /api/questions');
       return NextResponse.json({ message: 'Access Denied. You do not have permission to edit content.' }, { status: 403 });
+    }
+    if (!user.approved && user.role !== 'admin') {
+      console.timeEnd('API: POST /api/questions');
+      return NextResponse.json({ message: 'Your account is pending admin approval.' }, { status: 403 });
     }
 
     const { topic_id, title, description, difficulty, tags, answer, code, explanation } = await req.json();

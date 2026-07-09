@@ -339,6 +339,25 @@ function TodoDetailContent({ searchQuery }) {
     setActiveQuestion(updated);
   };
 
+  const handleExportPDF = async () => {
+    setError('');
+    setSuccess('');
+    try {
+      const { generateTopicPDF } = await import('@/lib/pdfExport');
+      const doc = await generateTopicPDF(topic, questions);
+      if (doc) {
+        doc.save(`${topic.title.replace(/\s+/g, '_')}_Curriculum.pdf`);
+        setSuccess('PDF exported successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError('Failed to generate PDF.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Failed to export PDF.');
+    }
+  };
+
   // Filters
   const filteredQuestions = useMemo(() => {
     return questions.filter(q => q.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -370,9 +389,19 @@ function TodoDetailContent({ searchQuery }) {
       {/* Back button and title */}
       <div className="detail-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>
-          <button className="btn btn-secondary" style={{ marginBottom: '12px', padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => router.push('/')}>
-            &larr; Back to Dashboard
-          </button>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => router.push('/')}>
+              &larr; Back to Dashboard
+            </button>
+            <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExportPDF}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export PDF
+            </button>
+          </div>
           {topic && (
             <div>
               <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>{topic.title}</h2>

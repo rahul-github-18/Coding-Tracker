@@ -132,9 +132,6 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button className="btn btn-secondary" onClick={handleExportPDF}>
-              Export PDF
-            </button>
             <button className="btn btn-danger" onClick={handleLogout}>
               Logout
             </button>

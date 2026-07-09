@@ -85,11 +85,6 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
           </div>
         </li>
         <li>
-          <div className="sidebar-link" onClick={onExportPDF}>
-            Export PDF
-          </div>
-        </li>
-        <li>
           <div className="sidebar-link" onClick={toggleTheme} style={{ display: 'flex', alignItems: 'center' }}>
             {isDarkMode ? (
               <>

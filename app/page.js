@@ -3,11 +3,12 @@
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import { todoService, userService, taskService } from '@/lib/api';
+import { todoService, userService, taskService, questionService } from '@/lib/api';
 
 function DashboardContent({ searchQuery }) {
   const [user, setUser] = useState(null);
   const [topics, setTopics] = useState([]);
+  const [allQuestions, setAllQuestions] = useState([]);
   const [usersList, setUsersList] = useState([]);
   const [userTasks, setUserTasks] = useState([]);
   const [userStats, setUserStats] = useState({
@@ -67,7 +68,8 @@ function DashboardContent({ searchQuery }) {
       const promises = [
         todoService.getTodos(),
         taskService.getUserTasks(),
-        taskService.getUserStats()
+        taskService.getUserStats(),
+        questionService.getAllQuestions()
       ];
 
       if (u.role === 'admin') {
@@ -76,11 +78,12 @@ function DashboardContent({ searchQuery }) {
         promises.push(Promise.resolve(null));
       }
 
-      const [allTopics, tasks, stats, allUsers] = await Promise.all(promises);
+      const [allTopics, tasks, stats, allQs, allUsers] = await Promise.all(promises);
       console.timeEnd('API: Parallel Fetch Dashboard Data');
 
       setTopics(allTopics || []);
       setUserTasks(tasks || []);
+      setAllQuestions(allQs || []);
       setUserStats(stats || {
         streak: 0,
         completedTasksCount: 0,
@@ -143,25 +146,39 @@ function DashboardContent({ searchQuery }) {
   };
 
   // User Actions
-  const handleUpdateTaskStatus = async (taskId, currentStatus) => {
+  // User Actions
+  const handleToggleItemStatus = async (item) => {
+    if (user && !user.approved && user.role !== 'admin') {
+      setError('Your account is pending admin approval.');
+      return;
+    }
     setError('');
     try {
-      let nextStatus = 'Pending';
-      if (currentStatus === 'Pending') nextStatus = 'In Progress';
-      else if (currentStatus === 'In Progress') nextStatus = 'Completed';
-      
-      await taskService.updateTask(taskId, { status: nextStatus });
+      if (item.taskId) {
+        let nextStatus = 'Pending';
+        if (item.status === 'Pending') nextStatus = 'In Progress';
+        else if (item.status === 'In Progress') nextStatus = 'Completed';
+        
+        if (nextStatus === 'Pending') {
+          await taskService.removeTask(item.taskId);
+        } else {
+          await taskService.updateTask(item.taskId, { status: nextStatus });
+        }
+      } else {
+        await taskService.addTask(item.item_type, item.dbId, 'In Progress');
+      }
       loadDashboardData(user);
     } catch (err) {
       setError('Failed to update task status.');
     }
   };
 
-  const handleRemoveTask = async (taskId) => {
-    if (!window.confirm('Are you sure you want to remove this task from Today\'s Tasks?')) return;
+  const handleRemoveTaskItem = async (item) => {
+    if (!item.taskId) return;
+    if (!window.confirm('Are you sure you want to remove this task?')) return;
     setError('');
     try {
-      await taskService.removeTask(taskId);
+      await taskService.removeTask(item.taskId);
       loadDashboardData(user);
     } catch (err) {
       setError('Failed to remove task.');
@@ -169,6 +186,10 @@ function DashboardContent({ searchQuery }) {
   };
 
   const handleQuickAdd = async (itemId, type) => {
+    if (user && !user.approved && user.role !== 'admin') {
+      setError('Your account is pending admin approval.');
+      return;
+    }
     setError('');
     setSuccess('');
     try {
@@ -192,12 +213,59 @@ function DashboardContent({ searchQuery }) {
     });
   }, [topics, searchQuery]);
 
-  const filteredUserTasks = useMemo(() => {
+  const renderTasks = useMemo(() => {
     if (filter === 'today') {
-      return userTasks.filter(t => t.status !== 'Completed');
+      return userTasks.filter(t => t.status !== 'Completed').map(t => ({
+        id: `today_${t.id}`,
+        dbId: t.item_id,
+        item_type: t.item_type,
+        title: t.details?.title || 'Coding task',
+        status: t.status,
+        taskId: t.id
+      }));
     }
-    return userTasks;
-  }, [userTasks, filter]);
+    
+    // For filter === 'all'
+    const statusMap = {};
+    userTasks.forEach(t => {
+      statusMap[`${t.item_type}_${t.item_id}`] = {
+        id: t.id,
+        status: t.status
+      };
+    });
+
+    const items = [];
+    topics.forEach(topic => {
+      const state = statusMap[`topic_${topic.id}`] || {};
+      items.push({
+        id: `topic_${topic.id}`,
+        dbId: topic.id,
+        item_type: 'topic',
+        title: topic.title,
+        status: state.status || 'Pending',
+        taskId: state.id || null
+      });
+
+      // Add questions for this topic
+      const topicQuestions = allQuestions.filter(q => q.todo_id === topic.id);
+      topicQuestions.forEach(q => {
+        const qState = statusMap[`question_${q.id}`] || {};
+        items.push({
+          id: `question_${q.id}`,
+          dbId: q.id,
+          item_type: 'question',
+          title: `${topic.title} > ${q.title}`,
+          status: qState.status || 'Pending',
+          taskId: qState.id || null
+        });
+      });
+    });
+
+    if (searchQuery) {
+      return items.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    return items;
+  }, [topics, allQuestions, userTasks, filter, searchQuery]);
 
   if (!user) {
     return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>;
@@ -368,18 +436,18 @@ function DashboardContent({ searchQuery }) {
                 {filter === 'today' ? "Today's Active Tasks" : "All Coding Tasks"}
               </h3>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Completed: {userTasks.filter(t => t.status === 'Completed').length} / {userTasks.length}
+                Completed: {renderTasks.filter(t => t.status === 'Completed').length} / {renderTasks.length}
               </span>
             </div>
 
-            {filteredUserTasks.length === 0 ? (
+            {renderTasks.length === 0 ? (
               <div style={{ padding: '32px 16px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
                 <p style={{ margin: 0 }}>Your tasks list is empty.</p>
                 <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>Browse curriculum topics in Dashboard to add learning tasks.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {filteredUserTasks.map((task) => (
+                {renderTasks.map((task) => (
                   <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -394,14 +462,14 @@ function DashboardContent({ searchQuery }) {
                             opacity: task.status === 'Completed' ? 0.6 : 1
                           }}
                         >
-                          {task.details?.title || 'Coding task'}
+                          {task.title}
                         </span>
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <button 
-                        onClick={() => handleUpdateTaskStatus(task.id, task.status)}
+                        onClick={() => handleToggleItemStatus(task)}
                         className="btn" 
                         style={{ 
                           padding: '4px 10px', 
@@ -413,13 +481,15 @@ function DashboardContent({ searchQuery }) {
                       >
                         {task.status}
                       </button>
-                      <button 
-                        onClick={() => handleRemoveTask(task.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
-                        title="Remove from board"
-                      >
-                        &times;
-                      </button>
+                      {task.taskId && (
+                        <button 
+                          onClick={() => handleRemoveTaskItem(task)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
+                          title="Remove from board"
+                        >
+                          &times;
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
