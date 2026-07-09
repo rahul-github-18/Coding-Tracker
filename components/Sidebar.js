@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
@@ -8,9 +8,22 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filter = searchParams.get('filter');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    // Read logged-in user from localStorage on mount
+    try {
+      const u = JSON.parse(localStorage.getItem('currentUser'));
+      setCurrentUser(u);
+    } catch (e) {
+      console.error('Error reading currentUser from localStorage:', e);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userId');
     router.push('/login');
   };
 
@@ -34,6 +47,19 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
             Dashboard
           </div>
         </li>
+
+        {/* Dedicated Admin User Management Option */}
+        {currentUser?.role === 'admin' && (
+          <li>
+            <div
+              className={`sidebar-link ${pathname === '/admin/users' ? 'active' : ''}`}
+              onClick={() => handleNavigate('/admin/users')}
+            >
+              User Management
+            </div>
+          </li>
+        )}
+
         <li>
           <div
             className={`sidebar-link ${pathname === '/' && filter === 'all' ? 'active' : ''}`}
@@ -99,5 +125,7 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
     </div>
   );
 });
+
+Sidebar.displayName = 'Sidebar';
 
 export default Sidebar;
