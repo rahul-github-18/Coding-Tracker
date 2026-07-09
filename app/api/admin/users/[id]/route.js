@@ -73,6 +73,6 @@ export async function PUT(req, { params }) {
   } catch (error) {
     console.error('Admin PUT user error:', error);
     console.timeEnd(timerLabel);
-    return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
+    return NextResponse.json({ message: error.message || 'Internal server error.' }, { status: 500 });
   }
 }
