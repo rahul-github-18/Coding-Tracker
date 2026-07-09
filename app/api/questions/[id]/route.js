@@ -1,126 +1,100 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+async function checkUser(req) {
+  const reqUserId = req.headers.get('x-user-id');
+  if (!reqUserId) return null;
+
+  const userCheck = await query('SELECT id, approved, role, can_view, can_edit, can_delete FROM users WHERE id = $1', [reqUserId]);
+  if (userCheck.rows.length === 0 || !userCheck.rows[0].approved) {
+    return null;
+  }
+  return userCheck.rows[0];
+}
+
 export async function GET(req, { params }) {
-  const requestStart = Date.now();
-  const { id } = params;
-  console.log(`[API GET /api/questions/${id}] Start`);
   try {
-    console.time(`Supabase Query: Get Question ${id}`);
-    const queryStart = Date.now();
-    const { data: question, error } = await supabase
-      .from('questions')
-      .select('id, todo_id, title, notes, code, updated_at')
-      .eq('id', id)
-      .maybeSingle();
-    console.timeEnd(`Supabase Query: Get Question ${id}`);
-    const queryEnd = Date.now();
-    console.log(`[API GET /api/questions/${id}] Supabase query execution time: ${queryEnd - queryStart} ms`);
+    const user = await checkUser(req);
+    if (!user || !user.can_view) {
+      return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
+    }
 
-    if (error) throw error;
+    const { id } = params;
+    const res = await query('SELECT * FROM questions WHERE id = $1', [id]);
 
-    if (!question) {
+    if (res.rows.length === 0) {
       return NextResponse.json({ message: 'Question not found.' }, { status: 404 });
     }
 
-    const requestEnd = Date.now();
-    console.log(`[API GET /api/questions/${id}] API execution time: ${requestEnd - requestStart} ms`);
-    console.log(`[API GET /api/questions/${id}] Total request time: ${requestEnd - requestStart} ms`);
-
-    return NextResponse.json(question);
+    return NextResponse.json(res.rows[0]);
   } catch (error) {
-    console.error('Error fetching question:', error);
+    console.error('GET question detail error:', error);
     return NextResponse.json({ message: 'Failed to retrieve question details.' }, { status: 500 });
   }
 }
 
 export async function PUT(req, { params }) {
-  const requestStart = Date.now();
-  const { id } = params;
-  console.log(`[API PUT /api/questions/${id}] Start`);
   try {
-    const { title, notes, code } = await req.json();
-
-    const updateData = {};
-    if (title !== undefined) {
-      if (title.trim() === '') {
-        return NextResponse.json({ message: 'Title cannot be empty.' }, { status: 400 });
-      }
-      updateData.title = title.trim();
+    const user = await checkUser(req);
+    if (!user || !user.can_edit) {
+      return NextResponse.json({ message: 'Access Denied. You do not have permission to edit content.' }, { status: 403 });
     }
 
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
+    const { id } = params;
+    const { title, description, difficulty, tags, answer, code, explanation } = await req.json();
 
-    if (code !== undefined) {
-      updateData.code = code;
-    }
-
-    // Set updated_at timestamp to now
-    updateData.updated_at = new Date().toISOString();
-
-    console.time(`Supabase Query: Update Question ${id}`);
-    const queryStart = Date.now();
-    const { data: updatedQuestion, error } = await supabase
-      .from('questions')
-      .update(updateData)
-      .eq('id', id)
-      .select('id, todo_id, title, notes, code, updated_at')
-      .maybeSingle();
-    console.timeEnd(`Supabase Query: Update Question ${id}`);
-    const queryEnd = Date.now();
-    console.log(`[API PUT /api/questions/${id}] Supabase query execution time: ${queryEnd - queryStart} ms`);
-
-    if (error) throw error;
-
-    if (!updatedQuestion) {
+    const checkRes = await query('SELECT * FROM questions WHERE id = $1', [id]);
+    if (checkRes.rows.length === 0) {
       return NextResponse.json({ message: 'Question not found.' }, { status: 404 });
     }
+    const question = checkRes.rows[0];
 
-    const requestEnd = Date.now();
-    console.log(`[API PUT /api/questions/${id}] API execution time: ${requestEnd - requestStart} ms`);
-    console.log(`[API PUT /api/questions/${id}] Total request time: ${requestEnd - requestStart} ms`);
+    const newTitle = title !== undefined ? title.trim() : question.title;
+    const newDescription = description !== undefined ? description : question.description;
+    const newDifficulty = difficulty !== undefined ? difficulty : question.difficulty;
+    const newTags = tags !== undefined ? tags : question.tags;
+    const newAnswer = answer !== undefined ? answer : question.answer;
+    const newCode = code !== undefined ? code : question.code;
+    const newExplanation = explanation !== undefined ? explanation : question.explanation;
 
-    return NextResponse.json(updatedQuestion);
+    if (newTitle === '') {
+      return NextResponse.json({ message: 'Title cannot be empty.' }, { status: 400 });
+    }
+
+    const updateRes = await query(
+      `UPDATE questions 
+       SET title = $1, description = $2, difficulty = $3, tags = $4, answer = $5, code = $6, explanation = $7
+       WHERE id = $8
+       RETURNING *`,
+      [newTitle, newDescription, newDifficulty, newTags, newAnswer, newCode, newExplanation, id]
+    );
+
+    return NextResponse.json(updateRes.rows[0]);
   } catch (error) {
-    console.error('Error updating question:', error);
-    return NextResponse.json({ message: 'Failed to save question notes and code.' }, { status: 500 });
+    console.error('PUT question error:', error);
+    return NextResponse.json({ message: 'Failed to update question.' }, { status: 500 });
   }
 }
 
 export async function DELETE(req, { params }) {
-  const requestStart = Date.now();
-  const { id } = params;
-  console.log(`[API DELETE /api/questions/${id}] Start`);
   try {
-    console.time(`Supabase Query: Delete Question ${id}`);
-    const queryStart = Date.now();
-    const { data: deletedQuestion, error } = await supabase
-      .from('questions')
-      .delete()
-      .eq('id', id)
-      .select('id')
-      .maybeSingle();
-    console.timeEnd(`Supabase Query: Delete Question ${id}`);
-    const queryEnd = Date.now();
-    console.log(`[API DELETE /api/questions/${id}] Supabase query execution time: ${queryEnd - queryStart} ms`);
+    const user = await checkUser(req);
+    if (!user || !user.can_delete) {
+      return NextResponse.json({ message: 'Access Denied. You do not have permission to delete content.' }, { status: 403 });
+    }
 
-    if (error) throw error;
+    const { id } = params;
+    const deleteRes = await query('DELETE FROM questions WHERE id = $1 RETURNING id', [id]);
 
-    if (!deletedQuestion) {
+    if (deleteRes.rows.length === 0) {
       return NextResponse.json({ message: 'Question not found.' }, { status: 404 });
     }
 
-    const requestEnd = Date.now();
-    console.log(`[API DELETE /api/questions/${id}] API execution time: ${requestEnd - requestStart} ms`);
-    console.log(`[API DELETE /api/questions/${id}] Total request time: ${requestEnd - requestStart} ms`);
-
     return NextResponse.json({ message: 'Question deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting question:', error);
-    return NextResponse.json({ message: 'Failed to delete the question.' }, { status: 500 });
+    console.error('DELETE question error:', error);
+    return NextResponse.json({ message: 'Failed to delete question.' }, { status: 500 });
   }
 }

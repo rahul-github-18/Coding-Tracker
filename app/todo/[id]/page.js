@@ -4,9 +4,9 @@ import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Editor from '@monaco-editor/react';
 import Layout from '@/components/Layout';
-import { todoService, questionService } from '@/lib/api';
+import { todoService, questionService, codeService, noteService, taskService } from '@/lib/api';
 
-function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
+function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave, readOnly }) {
   const [notes, setNotes] = useState(activeQuestion.notes || '');
   const [code, setCode] = useState(activeQuestion.code || '');
   const [saving, setSaving] = useState(false);
@@ -14,6 +14,7 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = async () => {
+    if (readOnly) return;
     setSaving(true);
     setError('');
     setSavedSuccess(false);
@@ -31,17 +32,9 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
     }
   };
 
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'Never';
-    const date = new Date(timestamp);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(code);
+    alert('Code copied to clipboard!');
   };
 
   return (
@@ -63,45 +56,48 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
         <div className="modal-body">
           {error && <div className="login-error" style={{ marginBottom: '16px' }}>{error}</div>}
           
-          <div className={`modal-editor-grid ${activeModal === 'both' ? 'split' : ''}`} style={{ flex: 1 }}>
+          <div className="modal-editor-grid split" style={{ flex: 1 }}>
             {/* Notes Column */}
-            {(activeModal === 'notes' || activeModal === 'both') && (
-              <div className="editor-pane">
-                <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px' }}>Notes</label>
-                <textarea
-                  className="notes-textarea"
-                  placeholder="Write notes here... (e.g. approach, time complexity, tips)"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  style={{ height: '100%' }}
-                />
-              </div>
-            )}
+            <div className="editor-pane">
+              <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px' }}>Explanation & Notes</label>
+              <textarea
+                className="notes-textarea"
+                placeholder={readOnly ? "No notes available." : "Write notes here... (e.g. approach, time complexity, tips)"}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                style={{ height: '100%' }}
+                disabled={readOnly}
+              />
+            </div>
 
             {/* Code Column */}
-            {(activeModal === 'code' || activeModal === 'both') && (
-              <div className="editor-pane">
-                <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px' }}>Java Code Editor</label>
-                <div className="monaco-wrapper" style={{ height: '100%', minHeight: '300px' }}>
-                  <Editor
-                    height="100%"
-                    defaultLanguage="java"
-                    theme="vs-dark"
-                    value={code}
-                    onChange={(value) => setCode(value || '')}
-                    options={{
-                      selectOnLineNumbers: true,
-                      lineNumbers: 'on',
-                      wordWrap: 'on',
-                      autoClosingBrackets: 'always',
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      automaticLayout: true
-                    }}
-                  />
-                </div>
+            <div className="editor-pane">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label className="form-label" style={{ fontWeight: '600', margin: 0 }}>Java Code Editor</label>
+                <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={handleCopyCode}>
+                  Copy Code
+                </button>
               </div>
-            )}
+              <div className="monaco-wrapper" style={{ height: '100%', minHeight: '300px' }}>
+                <Editor
+                  height="100%"
+                  defaultLanguage="java"
+                  theme="vs-dark"
+                  value={code}
+                  onChange={(value) => setCode(value || '')}
+                  options={{
+                    selectOnLineNumbers: true,
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    autoClosingBrackets: 'always',
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    automaticLayout: true,
+                    readOnly: readOnly
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -113,21 +109,20 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
                 Saved Successfully
               </div>
             )}
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Last Updated: {formatTimestamp(activeQuestion.updated_at)}
-            </div>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button className="btn btn-secondary" onClick={closeModal}>
               Close
             </button>
-            <button 
-              className="btn btn-primary" 
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Notes & Code'}
-            </button>
+            {!readOnly && (
+              <button 
+                className="btn btn-primary" 
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Notes & Code'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -136,20 +131,37 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave }) {
 }
 
 function TodoDetailContent({ searchQuery }) {
-  const { id: todoId } = useParams();
+  const { id: topicId } = useParams();
   const router = useRouter();
 
-  const [todo, setTodo] = useState(null);
+  const [user, setUser] = useState(null);
+  const [topic, setTopic] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [newTitle, setNewTitle] = useState('');
-  const [editingId, setEditingId] = useState(null);
-  const [editingTitle, setEditingTitle] = useState('');
+  const [codeExamples, setCodeExamples] = useState([]);
+  const [notes, setNotes] = useState([]);
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState('questions'); // 'questions', 'examples', 'notes'
+
+  // Input states
+  const [newQTitle, setNewQTitle] = useState('');
+  const [newQDifficulty, setNewQDifficulty] = useState('Beginner');
+  const [newQTags, setNewQTags] = useState('');
+  const [newQDesc, setNewQDesc] = useState('');
+  
+  const [newExTitle, setNewExTitle] = useState('');
+  const [newExLang, setNewExLang] = useState('Java');
+  const [newExCode, setNewExCode] = useState('');
+  const [newExExplanation, setNewExExplanation] = useState('');
+
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
+
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
 
   // Modal States
-  const [activeModal, setActiveModal] = useState(null); // 'notes', 'code', or 'both'
   const [activeQuestion, setActiveQuestion] = useState(null);
 
   useEffect(() => {
@@ -157,32 +169,39 @@ function TodoDetailContent({ searchQuery }) {
     if (!isLoggedIn) {
       router.replace('/login');
     } else {
-      setAuthorized(true);
-      fetchData();
+      try {
+        const u = JSON.parse(localStorage.getItem('currentUser'));
+        setUser(u);
+        fetchData();
+      } catch (e) {
+        localStorage.clear();
+        router.replace('/login');
+      }
     }
-  }, [todoId, router]);
+  }, [topicId, router]);
 
   const fetchData = async () => {
     setLoading(true);
     setError('');
     try {
-      // Parallel fetch of todos and questions to avoid waterfall
-      const [todosData, questionsData] = await Promise.all([
-        todoService.getTodos(),
-        questionService.getQuestions(todoId)
-      ]);
-
-      const currentTodo = todosData.find(t => t.id === parseInt(todoId));
-      if (!currentTodo) {
-        setError('Todo item not found.');
-        setLoading(false);
-        return;
+      const topicData = await todoService.getTodo || todoService.getTodos();
+      // Fetching topic detail via api
+      const res = await fetch(`/api/topics/${topicId}`, {
+        headers: { 'x-user-id': localStorage.getItem('userId') }
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Topic not found');
       }
-      setTodo(currentTodo);
-      setQuestions(questionsData);
+      
+      setTopic(data);
+      setQuestions(data.questions || []);
+      setCodeExamples(data.codeExamples || []);
+      setNotes(data.notes || []);
     } catch (err) {
       console.error(err);
-      setError('Database connection failed. Could not retrieve todo details.');
+      setError(err.message || 'Failed to retrieve topic details.');
     } finally {
       setLoading(false);
     }
@@ -190,83 +209,121 @@ function TodoDetailContent({ searchQuery }) {
 
   const handleAddQuestion = async (e) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newQTitle.trim()) return;
     setError('');
+    setSuccess('');
 
     try {
-      const created = await questionService.createQuestion(todoId, {
-        title: newTitle.trim(),
-        notes: '',
-        code: ''
+      const created = await questionService.createQuestion(topicId, {
+        title: newQTitle.trim(),
+        description: newQDesc,
+        difficulty: newQDifficulty,
+        tags: newQTags,
+        answer: '',
+        code: '',
+        explanation: ''
       });
-      setQuestions([...questions, created]);
-      setNewTitle('');
+      setQuestions([...questions, { ...created, status: 'Pending', saved_for_later: false }]);
+      setNewQTitle('');
+      setNewQDesc('');
+      setNewQTags('');
+      setSuccess('Question added successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error(err);
-      setError('Save failed. Could not add question.');
+      setError('Could not add question. Insufficient permissions.');
     }
   };
 
-  const handleStartEdit = (q) => {
-    setEditingId(q.id);
-    setEditingTitle(q.title);
-  };
-
-  const handleSaveTitle = async (qId) => {
-    if (!editingTitle.trim()) return;
+  const handleAddExample = async (e) => {
+    e.preventDefault();
+    if (!newExCode.trim()) return;
     setError('');
+    setSuccess('');
 
     try {
-      const updated = await questionService.updateQuestion(qId, { title: editingTitle.trim() });
-      setQuestions(questions.map(q => (q.id === qId ? { ...q, title: updated.title } : q)));
-      setEditingId(null);
-      // Keep active question model in sync if edited
-      if (activeQuestion && activeQuestion.id === qId) {
-        setActiveQuestion({ ...activeQuestion, title: updated.title });
-      }
+      const created = await codeService.createExample(topicId, {
+        title: newExTitle.trim(),
+        language: newExLang,
+        code: newExCode,
+        explanation: newExExplanation
+      });
+      setCodeExamples([...codeExamples, { ...created, status: 'Pending', saved_for_later: false }]);
+      setNewExTitle('');
+      setNewExCode('');
+      setNewExExplanation('');
+      setSuccess('Code example added successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error(err);
-      setError('Save failed. Could not update question title.');
+      setError('Could not add example. Insufficient permissions.');
     }
   };
 
-  const handleDelete = async (qId) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) {
-      return;
-    }
+  const handleAddNote = async (e) => {
+    e.preventDefault();
+    if (!newNoteTitle.trim() || !newNoteContent.trim()) return;
     setError('');
+    setSuccess('');
 
     try {
-      await questionService.deleteQuestion(qId);
-      setQuestions(questions.filter(q => q.id !== qId));
-      if (activeQuestion && activeQuestion.id === qId) {
-        closeModal();
-      }
+      const created = await noteService.createNote(topicId, {
+        title: newNoteTitle.trim(),
+        content: newNoteContent
+      });
+      setNotes([...notes, { ...created, status: 'Pending', saved_for_later: false }]);
+      setNewNoteTitle('');
+      setNewNoteContent('');
+      setSuccess('Note added successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      console.error(err);
-      setError('Delete failed. Could not remove question.');
+      setError('Could not add note. Insufficient permissions.');
     }
   };
 
-  // Modal Open Handlers
-  const openNotesModal = (q) => {
-    setActiveQuestion(q);
-    setActiveModal('notes');
+  const handleDeleteItem = async (itemId, type) => {
+    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+    setError('');
+    setSuccess('');
+
+    try {
+      if (type === 'question') {
+        await questionService.deleteQuestion(itemId);
+        setQuestions(questions.filter(q => q.id !== itemId));
+      } else if (type === 'code_example') {
+        await codeService.deleteExample(itemId);
+        setCodeExamples(codeExamples.filter(e => e.id !== itemId));
+      } else if (type === 'note') {
+        await noteService.deleteNote(itemId);
+        setNotes(notes.filter(n => n.id !== itemId));
+      }
+      setSuccess(`${type} deleted successfully.`);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(`Failed to delete ${type}. Insufficient permissions.`);
+    }
   };
 
-  const openCodeModal = (q) => {
-    setActiveQuestion(q);
-    setActiveModal('code');
-  };
+  const handleTaskAction = async (itemId, type, action) => {
+    setError('');
+    setSuccess('');
+    try {
+      let status = 'Pending';
+      let saved = false;
 
-  const openCombinedModal = (q) => {
-    setActiveQuestion(q);
-    setActiveModal('both');
-  };
+      if (action === 'today') {
+        status = 'Pending';
+      } else if (action === 'later') {
+        saved = true;
+      } else if (action === 'complete') {
+        status = 'Completed';
+      }
 
-  const closeModal = () => {
-    setActiveModal(null);
-    setActiveQuestion(null);
+      await taskService.addTask(type, itemId, status, saved);
+      setSuccess('Added to your dashboard productivity list.');
+      fetchData(); // Reload status indicator
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Failed to update task.');
+    }
   };
 
   const handleSaveModalData = async (notes, code) => {
@@ -274,147 +331,356 @@ function TodoDetailContent({ searchQuery }) {
       notes,
       code
     });
-
-    // Update question in local list state
-    setQuestions(questions.map(q => q.id === activeQuestion.id ? updated : q));
+    setQuestions(questions.map(q => q.id === activeQuestion.id ? { ...q, notes: updated.notes, code: updated.code } : q));
     setActiveQuestion(updated);
   };
 
-  // Instant filter search logic memoized
+  // Filters
   const filteredQuestions = useMemo(() => {
-    return questions.filter(q =>
-      q.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return questions.filter(q => q.title.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [questions, searchQuery]);
 
-  if (!authorized) {
-    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Checking authorization...</div>;
+  const filteredExamples = useMemo(() => {
+    return codeExamples.filter(e => (e.title || '').toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [codeExamples, searchQuery]);
+
+  const filteredNotes = useMemo(() => {
+    return notes.filter(n => n.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [notes, searchQuery]);
+
+  if (!user || loading) {
+    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading topic details...</div>;
   }
+
+  const canEdit = user.role === 'admin' || user.can_edit;
+  const canDelete = user.role === 'admin' || user.can_delete;
 
   return (
     <div className="detail-layout" style={{ flex: 1 }}>
       {/* Back button and title */}
-      <div className="detail-header">
+      <div className="detail-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>
-          <button className="btn btn-secondary" style={{ marginBottom: '12px', padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => router.back()}>
+          <button className="btn btn-secondary" style={{ marginBottom: '12px', padding: '6px 12px', fontSize: '0.85rem' }} onClick={() => router.push('/')}>
             &larr; Back to Dashboard
           </button>
-          {todo && <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-heading)' }}>{todo.title}</h2>}
+          {topic && (
+            <div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>{topic.title}</h2>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: '600', padding: '2px 8px', backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-muted)', borderRadius: '4px' }}>
+                  {topic.category}
+                </span>
+                <span style={{ fontSize: '0.8rem', fontWeight: '500', color: topic.difficulty === 'Advanced' ? '#d93025' : topic.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                  {topic.difficulty} Difficulty
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Est. Completion: {topic.estimated_time}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {error && <div className="login-error">{error}</div>}
+      {success && <div className="save-indicator">{success}</div>}
 
-      {/* Add question form */}
-      <div>
-        <h3 style={{ fontSize: '1.15rem', marginBottom: '12px', color: 'var(--text-heading)' }}>Add Coding Question</h3>
-        <form onSubmit={handleAddQuestion} style={{ display: 'flex', gap: '12px', maxWidth: '600px' }}>
-          <input
-            type="text"
-            placeholder="Question title (e.g. Reverse a String, Binary Search)..."
-            className="form-input"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>Add Question</button>
-        </form>
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--card-border)', gap: '16px', marginTop: '12px' }}>
+        {[
+          { key: 'questions', label: `Questions (${questions.length})` },
+          { key: 'examples', label: `Code Examples (${codeExamples.length})` },
+          { key: 'notes', label: `Study Notes (${notes.length})` }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: '12px 16px',
+              fontWeight: '700',
+              fontSize: '0.95rem',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderBottom: activeTab === tab.key ? '3px solid var(--link-color)' : '3px solid transparent',
+              color: activeTab === tab.key ? 'var(--link-color)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Questions list */}
-      <div>
-        <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', color: 'var(--text-heading)' }}>Questions</h3>
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[1, 2].map((i) => (
-              <div key={i} className="skeleton-list-item">
-                <div className="skeleton" style={{ width: '40%', height: '20px' }}></div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div className="skeleton" style={{ width: '60px', height: '28px' }}></div>
-                  <div className="skeleton" style={{ width: '60px', height: '28px' }}></div>
-                  <div className="skeleton" style={{ width: '55px', height: '28px' }}></div>
-                  <div className="skeleton" style={{ width: '60px', height: '28px' }}></div>
+      {/* Tab Contents */}
+      <div style={{ marginTop: '20px' }}>
+        
+        {/* QUESTIONS TAB */}
+        {activeTab === 'questions' && (
+          <div style={{ display: 'grid', gridTemplateColumns: canEdit ? '3fr 2fr' : '1fr', gap: '24px', alignItems: 'start' }}>
+            
+            {/* List */}
+            <div>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', color: 'var(--text-heading)' }}>Curriculum Questions</h3>
+              {filteredQuestions.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-title">No questions found</div>
+                  <p>Create questions or modify the search term.</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredQuestions.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-title">No questions found</div>
-            <p>
-              {searchQuery 
-                ? 'No questions match your search query.' 
-                : 'No questions added yet. Create your first coding question above.'}
-            </p>
-          </div>
-        ) : (
-          <div className="list-section">
-            {filteredQuestions.map((q) => (
-              <div key={q.id} className="list-item">
-                <div style={{ flex: 1, marginRight: '16px' }}>
-                  {editingId === q.id ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        required
-                      />
-                      <button className="btn btn-success" style={{ padding: '8px 12px', fontSize: '0.8rem' }} onClick={() => handleSaveTitle(q.id)}>
-                        Save
-                      </button>
-                      <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.8rem' }} onClick={() => setEditingId(null)}>
-                        Cancel
-                      </button>
+              ) : (
+                <div className="list-section">
+                  {filteredQuestions.map((q) => (
+                    <div key={q.id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span 
+                            className="list-item-title" 
+                            onClick={() => setActiveQuestion(q)}
+                            style={{ fontSize: '1.1rem', fontWeight: '700' }}
+                          >
+                            {q.title}
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '4px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '500', color: q.difficulty === 'Advanced' ? '#d93025' : q.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                              {q.difficulty}
+                            </span>
+                            {q.tags && q.tags.split(',').map((tag, idx) => (
+                              <span key={idx} style={{ fontSize: '0.7rem', padding: '1px 6px', backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-muted)', borderRadius: '4px' }}>
+                                #{tag.trim()}
+                              </span>
+                            ))}
+                          </div>
+                          {q.description && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px', margin: 0 }}>
+                              {q.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Completion state badge */}
+                        {q.status === 'Completed' && (
+                          <span style={{ fontSize: '0.8rem', padding: '2px 8px', backgroundColor: '#e6f4ea', color: '#137333', borderRadius: '4px', fontWeight: '600' }}>
+                            ✓ Done
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '10px', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(q.id, 'question', 'today')}>
+                            Add to Today
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(q.id, 'question', 'later')}>
+                            Save for Later
+                          </button>
+                          <button className="btn btn-success" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(q.id, 'question', 'complete')}>
+                            Mark Completed
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => setActiveQuestion(q)}>
+                            Open Code & Explanation
+                          </button>
+                          {canDelete && (
+                            <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDeleteItem(q.id, 'question')}>
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <span 
-                      className="list-item-title" 
-                      onClick={() => openCombinedModal(q)}
-                      style={{ cursor: 'pointer', fontWeight: '600', color: 'var(--text-heading)' }}
-                    >
-                      {q.title}
-                    </span>
-                  )}
+                  ))}
                 </div>
-                {editingId !== q.id && (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ padding: '6px 12px', fontSize: '0.8rem' }} 
-                      onClick={() => openNotesModal(q)}
-                    >
-                      {q.notes && q.notes.trim() !== '' ? 'Notes' : 'Add Notes'}
-                    </button>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ padding: '6px 12px', fontSize: '0.8rem' }} 
-                      onClick={() => openCodeModal(q)}
-                    >
-                      {q.code && q.code.trim() !== '' ? 'Code' : 'Add Code'}
-                    </button>
-                    <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleStartEdit(q)}>
-                      Edit
-                    </button>
-                    <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(q.id)}>
-                      Delete
-                    </button>
-                  </div>
-                )}
+              )}
+            </div>
+
+            {/* Create form (admin only) */}
+            {canEdit && (
+              <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+                  Add Learning Question
+                </h3>
+                <form onSubmit={handleAddQuestion} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder="Title (e.g. Find target element)" className="form-input" value={newQTitle} onChange={e => setNewQTitle(e.target.value)} required />
+                  <textarea placeholder="Description or question prompt..." className="form-input" style={{ height: '80px' }} value={newQDesc} onChange={e => setNewQDesc(e.target.value)} />
+                  <select className="form-input" value={newQDifficulty} onChange={e => setNewQDifficulty(e.target.value)}>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                  <input type="text" placeholder="Tags (e.g. binary-search, array)" className="form-input" value={newQTags} onChange={e => setNewQTags(e.target.value)} />
+                  <button type="submit" className="btn btn-success">Save Question</button>
+                </form>
               </div>
-            ))}
+            )}
+          </div>
+        )}
+
+        {/* CODE EXAMPLES TAB */}
+        {activeTab === 'examples' && (
+          <div style={{ display: 'grid', gridTemplateColumns: canEdit ? '3fr 2fr' : '1fr', gap: '24px', alignItems: 'start' }}>
+            
+            {/* List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 style={{ fontSize: '1.15rem', color: 'var(--text-heading)', margin: 0 }}>Syntax-Highlighted Examples</h3>
+              {filteredExamples.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-title">No examples found</div>
+                  <p>Create code examples or adjust searching filter.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {filteredExamples.map((ex) => (
+                    <div key={ex.id} className="card" style={{ minHeight: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>
+                          {ex.title || 'Code Snippet'}
+                        </h4>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                            {ex.language}
+                          </span>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
+                            onClick={() => {
+                              navigator.clipboard.writeText(ex.code);
+                              alert('Code copied!');
+                            }}
+                          >
+                            Copy Code
+                          </button>
+                        </div>
+                      </div>
+
+                      <pre style={{ padding: '16px', backgroundColor: '#1e1e1e', color: '#d4d4d4', borderRadius: '8px', fontSize: '0.85rem', overflowX: 'auto', fontFamily: 'monospace', margin: 0, maxHeight: '250px' }}>
+                        <code>{ex.code}</code>
+                      </pre>
+
+                      {ex.explanation && (
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', margin: 0 }}>
+                          <strong>Explanation:</strong> {ex.explanation}
+                        </p>
+                      )}
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(ex.id, 'code_example', 'today')}>
+                            Add to Today
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(ex.id, 'code_example', 'later')}>
+                            Save for Later
+                          </button>
+                          <button className="btn btn-success" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(ex.id, 'code_example', 'complete')}>
+                            Mark Completed
+                          </button>
+                        </div>
+                        {canDelete && (
+                          <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDeleteItem(ex.id, 'code_example')}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Create form (admin only) */}
+            {canEdit && (
+              <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+                  Add Code Example
+                </h3>
+                <form onSubmit={handleAddExample} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder="Title (e.g. Stream grouping)" className="form-input" value={newExTitle} onChange={e => setNewExTitle(e.target.value)} required />
+                  <input type="text" placeholder="Programming Language (e.g. Java)" className="form-input" value={newExLang} onChange={e => setNewExLang(e.target.value)} />
+                  <textarea placeholder="Paste source code here..." className="form-input" style={{ height: '180px', fontFamily: 'monospace' }} value={newExCode} onChange={e => setNewExCode(e.target.value)} required />
+                  <textarea placeholder="Explanation..." className="form-input" style={{ height: '60px' }} value={newExExplanation} onChange={e => setNewExExplanation(e.target.value)} />
+                  <button type="submit" className="btn btn-success">Save Example</button>
+                </form>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NOTES TAB */}
+        {activeTab === 'notes' && (
+          <div style={{ display: 'grid', gridTemplateColumns: canEdit ? '3fr 2fr' : '1fr', gap: '24px', alignItems: 'start' }}>
+            
+            {/* List */}
+            <div>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', color: 'var(--text-heading)' }}>Topic Explanation Notes</h3>
+              {filteredNotes.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-title">No notes found</div>
+                  <p>Create explanation notes for study.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {filteredNotes.map((note) => (
+                    <div key={note.id} className="card" style={{ minHeight: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)', margin: 0 }}>
+                        {note.title}
+                      </h4>
+                      <p style={{ fontSize: '0.95rem', color: 'var(--text-color)', lineHeight: '1.7', whiteSpace: 'pre-wrap', margin: 0 }}>
+                        {note.content}
+                      </p>
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(note.id, 'note', 'today')}>
+                            Add to Today
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(note.id, 'note', 'later')}>
+                            Save for Later
+                          </button>
+                          <button className="btn btn-success" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleTaskAction(note.id, 'note', 'complete')}>
+                            Mark Completed
+                          </button>
+                        </div>
+                        {canDelete && (
+                          <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDeleteItem(note.id, 'note')}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Create form (admin only) */}
+            {canEdit && (
+              <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+                  Add Study Note
+                </h3>
+                <form onSubmit={handleAddNote} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder="Title (e.g. Space complexity review)" className="form-input" value={newNoteTitle} onChange={e => setNewNoteTitle(e.target.value)} required />
+                  <textarea placeholder="Write explanation or content notes here..." className="form-input" style={{ height: '220px' }} value={newNoteContent} onChange={e => setNewNoteContent(e.target.value)} required />
+                  <button type="submit" className="btn btn-success">Save Note</button>
+                </form>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Floating Modal Editor Popup */}
-      {activeModal && activeQuestion && (
+      {activeQuestion && (
         <NotesCodeModal
-          activeModal={activeModal}
+          activeModal="both"
           activeQuestion={activeQuestion}
-          closeModal={closeModal}
+          closeModal={() => setActiveQuestion(null)}
           onSave={handleSaveModalData}
+          readOnly={!canEdit}
         />
       )}
     </div>
