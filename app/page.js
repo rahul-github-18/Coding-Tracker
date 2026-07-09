@@ -9,6 +9,7 @@ function DashboardContent({ searchQuery }) {
   const [user, setUser] = useState(null);
   const [topics, setTopics] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
+  const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [usersList, setUsersList] = useState([]);
   const [userTasks, setUserTasks] = useState([]);
   const [userStats, setUserStats] = useState({
@@ -82,6 +83,9 @@ function DashboardContent({ searchQuery }) {
       console.timeEnd('API: Parallel Fetch Dashboard Data');
 
       setTopics(allTopics || []);
+      if (allTopics && allTopics.length > 0) {
+        setSelectedTopicId(prev => prev || allTopics[0].id);
+      }
       setUserTasks(tasks || []);
       setAllQuestions(allQs || []);
       setUserStats(stats || {
@@ -477,117 +481,264 @@ function DashboardContent({ searchQuery }) {
 
       {/* Conditional module-wise content rendering based on selected Navbar filter */}
       {filter ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', alignItems: 'start' }}>
-          
-          {/* Today's Tasks board */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="card" style={{ minHeight: 'auto', padding: '24px', marginBottom: 0 }}>
+        filter === 'today' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', alignItems: 'start' }}>
+            
+            {/* Today's Tasks board */}
+            <div className="card" style={{ minHeight: 'auto', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                  {filter === 'today' ? "Today's Active Tasks" : "All Coding Tasks"}
+                  Today's Active Tasks
                 </h3>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  {filter === 'today' ? (
-                    `Completed: ${renderTasks.filter(t => t.status === 'Completed').length} / ${renderTasks.length}`
-                  ) : (
-                    `Completed: ${completedTasksCount} / ${allTasksCount}`
-                  )}
+                  Completed: {renderTasks.filter(t => t.status === 'Completed').length} / {renderTasks.length}
                 </span>
               </div>
 
-              {filter === 'today' ? (
-                renderTasks.length === 0 ? (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
-                    <p style={{ margin: 0 }}>Your tasks list is empty.</p>
-                    <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>Browse curriculum topics in Dashboard to add learning tasks.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {renderTasks.map((task) => (
-                      <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.7rem', padding: '1px 4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
-                              {task.item_type}
-                            </span>
-                            <span 
-                              style={{ 
-                                fontWeight: '600', 
-                                color: 'var(--text-heading)',
-                                textDecoration: task.status === 'Completed' ? 'line-through' : 'none',
-                                opacity: task.status === 'Completed' ? 0.6 : 1
-                              }}
-                            >
-                              {task.title}
-                            </span>
-                          </div>
-                        </div>
-
+              {renderTasks.length === 0 ? (
+                <div style={{ padding: '32px 16px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
+                  <p style={{ margin: 0 }}>Your tasks list is empty.</p>
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>Browse curriculum topics in Dashboard to add learning tasks.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {renderTasks.map((task) => (
+                    <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button 
-                            onClick={() => handleToggleItemStatus(task)}
-                            className="btn" 
+                          <span style={{ fontSize: '0.7rem', padding: '1px 4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
+                            {task.item_type}
+                          </span>
+                          <span 
                             style={{ 
-                              padding: '4px 10px', 
-                              fontSize: '0.75rem',
-                              backgroundColor: task.status === 'Completed' ? '#e6f4ea' : task.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
-                              color: task.status === 'Completed' ? '#137333' : task.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
-                              border: '1px solid ' + (task.status === 'Completed' ? '#ceead6' : task.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
+                              fontWeight: '600', 
+                              color: 'var(--text-heading)',
+                              textDecoration: task.status === 'Completed' ? 'line-through' : 'none',
+                              opacity: task.status === 'Completed' ? 0.6 : 1
                             }}
                           >
-                            {task.status}
-                          </button>
-                          {task.taskId && (
-                            <button 
-                              onClick={() => handleRemoveTaskItem(task)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
-                              title="Remove from board"
-                            >
-                              &times;
-                            </button>
-                          )}
+                            {task.title}
+                          </span>
                         </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button 
+                          onClick={() => handleToggleItemStatus(task)}
+                          className="btn" 
+                          style={{ 
+                            padding: '4px 10px', 
+                            fontSize: '0.75rem',
+                            backgroundColor: task.status === 'Completed' ? '#e6f4ea' : task.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
+                            color: task.status === 'Completed' ? '#137333' : task.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
+                            border: '1px solid ' + (task.status === 'Completed' ? '#ceead6' : task.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
+                          }}
+                        >
+                          {task.status}
+                        </button>
+                        {task.taskId && (
+                          <button 
+                            onClick={() => handleRemoveTaskItem(task)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
+                            title="Remove from board"
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Learning Statistics & Recommendations Column */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Recommendations Card */}
+              <div className="card" style={{ minHeight: 'auto', padding: '24px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', color: 'var(--text-heading)' }}>
+                  Recommended for You
+                </h3>
+                {userStats.recommendations && userStats.recommendations.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {userStats.recommendations.map(rec => (
+                      <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '6px' }}>
+                        <div style={{ flex: 1, marginRight: '8px' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                            {rec.topic_title}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-heading)' }}>
+                            {rec.title}
+                          </div>
+                        </div>
+                        <button 
+                          className="btn btn-primary" 
+                          style={{ padding: '4px 8px', fontSize: '0.7rem' }}
+                          onClick={() => handleQuickAdd(rec.id, 'question')}
+                          disabled={!user.approved && user.role !== 'admin'}
+                        >
+                          + Add
+                        </button>
                       </div>
                     ))}
                   </div>
-                )
-              ) : (
-                /* Grouped Topics and Questions */
-                groupedTasks.length === 0 ? (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
-                    No topics or questions match your search.
-                  </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {groupedTasks.map((group) => (
-                      <div key={group.id} style={{ border: '1px solid var(--card-border)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--card-bg)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px', marginBottom: '12px' }}>
-                          <div>
-                            <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', marginRight: '8px', textTransform: 'uppercase' }}>
-                              {group.category}
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                    Awesome job! No unfinished tasks left to recommend.
+                  </p>
+                )}
+              </div>
+            </div>
+
+          </div>
+        ) : (
+          /* Coding Tasks Split View (Master-Detail) */
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
+            
+            {/* Left Side: Topic Navigation Menu (Master Panel) */}
+            <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '16px' }}>
+                Curriculum Topics
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {groupedTasks.length === 0 ? (
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No topics match search.</div>
+                ) : (
+                  groupedTasks.map((group) => {
+                    const isActive = selectedTopicId === group.id;
+                    const qCompleted = group.questions.filter(q => q.status === 'Completed').length;
+                    const qTotal = group.questions.length;
+                    const percentage = qTotal > 0 ? Math.round((qCompleted / qTotal) * 100) : 0;
+
+                    return (
+                      <div 
+                        key={group.id}
+                        onClick={() => setSelectedTopicId(group.id)}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: `1px solid ${isActive ? 'var(--link-color)' : 'var(--card-border)'}`,
+                          backgroundColor: isActive ? 'rgba(26, 115, 232, 0.08)' : 'var(--list-item-bg)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: '600', padding: '1px 4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                            {group.category}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                            {percentage}%
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '700', color: isActive ? 'var(--link-color)' : 'var(--text-heading)' }}>
+                          {group.title}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Questions: {qCompleted} / {qTotal}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Right Side: Questions & Details for Selected Topic (Detail Panel) */}
+            {(() => {
+              const activeGroup = groupedTasks.find(g => g.id === selectedTopicId) || groupedTasks[0];
+              if (!activeGroup) {
+                return (
+                  <div className="card" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No topic selected.
+                  </div>
+                );
+              }
+
+              return (
+                <div className="card" style={{ padding: '24px', minHeight: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--card-border)', paddingBottom: '16px', marginBottom: '20px' }}>
+                    <div>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                          {activeGroup.category}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: activeGroup.difficulty === 'Advanced' ? '#d93025' : activeGroup.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                          {activeGroup.difficulty}
+                        </span>
+                      </div>
+                      <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                        {activeGroup.title}
+                      </h3>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button
+                        onClick={() => handleToggleItemStatus({ taskId: activeGroup.taskId, status: activeGroup.status, dbId: activeGroup.id, item_type: 'topic' })}
+                        className="btn"
+                        style={{
+                          padding: '6px 14px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          backgroundColor: activeGroup.status === 'Completed' ? '#e6f4ea' : activeGroup.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
+                          color: activeGroup.status === 'Completed' ? '#137333' : activeGroup.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
+                          border: '1px solid ' + (activeGroup.status === 'Completed' ? '#ceead6' : activeGroup.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
+                        }}
+                      >
+                        Topic: {activeGroup.status}
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600' }}
+                        onClick={() => router.push(`/todo/${activeGroup.id}`)}
+                      >
+                        Study Topic &rarr;
+                      </button>
+                    </div>
+                  </div>
+
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', marginBottom: '12px' }}>
+                    Curriculum Questions
+                  </h4>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {activeGroup.questions.length === 0 ? (
+                      <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        No questions registered under this curriculum topic.
+                      </div>
+                    ) : (
+                      activeGroup.questions.map((q) => (
+                        <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, marginRight: '16px' }}>
+                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
+                              question
                             </span>
-                            <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-heading)' }}>
-                              {group.title}
+                            <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-heading)', textDecoration: q.status === 'Completed' ? 'line-through' : 'none', opacity: q.status === 'Completed' ? 0.6 : 1 }}>
+                              {q.title}
                             </span>
                           </div>
+                          
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <button
-                              onClick={() => handleToggleItemStatus({ taskId: group.taskId, status: group.status, dbId: group.id, item_type: 'topic' })}
+                              onClick={() => handleToggleItemStatus({ taskId: q.taskId, status: q.status, dbId: q.id, item_type: 'question' })}
                               className="btn"
                               style={{
                                 padding: '4px 10px',
-                                fontSize: '0.7rem',
-                                backgroundColor: group.status === 'Completed' ? '#e6f4ea' : group.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
-                                color: group.status === 'Completed' ? '#137333' : group.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
-                                border: '1px solid ' + (group.status === 'Completed' ? '#ceead6' : group.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
+                                fontSize: '0.75rem',
+                                backgroundColor: q.status === 'Completed' ? '#e6f4ea' : q.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
+                                color: q.status === 'Completed' ? '#137333' : q.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
+                                border: '1px solid ' + (q.status === 'Completed' ? '#ceead6' : q.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
                               }}
                             >
-                              {group.status}
+                              {q.status}
                             </button>
-                            {group.taskId && (
+                            {q.taskId && (
                               <button
-                                onClick={() => handleRemoveTaskItem({ taskId: group.taskId })}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '2px' }}
+                                onClick={() => handleRemoveTaskItem({ taskId: q.taskId })}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
                                 title="Remove from board"
                               >
                                 &times;
@@ -595,98 +746,15 @@ function DashboardContent({ searchQuery }) {
                             )}
                           </div>
                         </div>
-
-                        {/* Questions list under this topic */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px' }}>
-                          {group.questions.length === 0 ? (
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                              No questions under this topic.
-                            </span>
-                          ) : (
-                            group.questions.map((q) => (
-                              <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '6px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, marginRight: '8px' }}>
-                                  <span style={{ fontSize: '0.65rem', padding: '1px 4px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
-                                    question
-                                  </span>
-                                  <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-heading)', textDecoration: q.status === 'Completed' ? 'line-through' : 'none', opacity: q.status === 'Completed' ? 0.6 : 1 }}>
-                                    {q.title}
-                                  </span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <button
-                                    onClick={() => handleToggleItemStatus({ taskId: q.taskId, status: q.status, dbId: q.id, item_type: 'question' })}
-                                    className="btn"
-                                    style={{
-                                      padding: '3px 8px',
-                                      fontSize: '0.7rem',
-                                      backgroundColor: q.status === 'Completed' ? '#e6f4ea' : q.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
-                                      color: q.status === 'Completed' ? '#137333' : q.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
-                                      border: '1px solid ' + (q.status === 'Completed' ? '#ceead6' : q.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
-                                    }}
-                                  >
-                                    {q.status}
-                                  </button>
-                                  {q.taskId && (
-                                    <button
-                                      onClick={() => handleRemoveTaskItem({ taskId: q.taskId })}
-                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '2px' }}
-                                      title="Remove from board"
-                                    >
-                                      &times;
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Learning Statistics & Recommendations Column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Recommendations Card */}
-            <div className="card" style={{ minHeight: 'auto', padding: '24px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', color: 'var(--text-heading)' }}>
-                Recommended for You
-              </h3>
-              {userStats.recommendations && userStats.recommendations.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {userStats.recommendations.map(rec => (
-                    <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '6px' }}>
-                      <div style={{ flex: 1, marginRight: '8px' }}>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                          {rec.topic_title}
-                        </div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-heading)' }}>
-                          {rec.title}
-                        </div>
-                      </div>
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ padding: '4px 8px', fontSize: '0.7rem' }}
-                        onClick={() => handleQuickAdd(rec.id, 'question')}
-                        disabled={!user.approved && user.role !== 'admin'}
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  ))}
                 </div>
-              ) : (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Awesome job! No unfinished tasks left to recommend.
-                </p>
-              )}
-            </div>
+              );
+            })()}
+
           </div>
-        </div>
+        )
       ) : (
         /* Default Home Dashboard - explore curriculum and general progress */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
