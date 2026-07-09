@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getCachedCurriculum } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,70 +21,61 @@ async function checkUser(req) {
 }
 
 export async function GET(req) {
+  console.time('API: GET /api/user/stats');
   try {
     const user = await checkUser(req);
     if (!user) {
+      console.timeEnd('API: GET /api/user/stats');
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
     }
 
-    // 1. Total count of learning items using optimized count queries
-    const [qCountRes, eCountRes, nCountRes] = await Promise.all([
-      supabase.from('questions').select('id', { count: 'exact', head: true }),
-      supabase.from('code_examples').select('id', { count: 'exact', head: true }),
-      supabase.from('notes').select('id', { count: 'exact', head: true })
-    ]);
+    // Fetch curriculum from cache
+    const { todos, questions, codeExamples, notes } = await getCachedCurriculum();
 
-    const qCount = qCountRes.count || 0;
-    const eCount = eCountRes.count || 0;
-    const nCount = nCountRes.count || 0;
+    const qCount = questions.length;
+    const eCount = codeExamples.length;
+    const nCount = notes.length;
     const totalItems = qCount + eCount + nCount;
 
-    // 2. Total completed items by user
-    const completedRes = await supabase
-      .from('user_tasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'Completed');
+    // Fetch user completed tasks and recent tasks in parallel
+    console.time('Supabase: Fetch user_tasks (stats)');
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const completedItems = completedRes.count || 0;
+    const [completedRes, recentTasksRes] = await Promise.all([
+      supabase.from('user_tasks').select('item_type, item_id').eq('user_id', user.id).eq('status', 'Completed'),
+      supabase.from('user_tasks').select('completed_at').eq('user_id', user.id).eq('status', 'Completed').gte('completed_at', sevenDaysAgo.toISOString())
+    ]);
+    console.timeEnd('Supabase: Fetch user_tasks (stats)');
 
-    // 3. Percentage
+    if (completedRes.error) throw completedRes.error;
+    if (recentTasksRes.error) throw recentTasksRes.error;
+
+    const userCompletedTasks = completedRes.data || [];
+    const completedItems = userCompletedTasks.length;
+
+    // Percentage
     const learningPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-    // 4. Completed topics count (todos is the topics table)
-    const { data: todos, error: todosError } = await supabase.from('todos').select('id');
-    if (todosError) throw todosError;
-
-    const [allQuestions, allExamples, allNotes, userCompletedTasks] = await Promise.all([
-      supabase.from('questions').select('id, todo_id'),
-      supabase.from('code_examples').select('id, topic_id'),
-      supabase.from('notes').select('id, topic_id'),
-      supabase.from('user_tasks').select('item_type, item_id').eq('user_id', user.id).eq('status', 'Completed')
-    ]);
-
-    if (allQuestions.error) throw allQuestions.error;
-    if (allExamples.error) throw allExamples.error;
-    if (allNotes.error) throw allNotes.error;
-    if (userCompletedTasks.error) throw userCompletedTasks.error;
-
-    const completedQuestionIds = new Set(userCompletedTasks.data.filter(t => t.item_type === 'question').map(t => t.item_id));
-    const completedExampleIds = new Set(userCompletedTasks.data.filter(t => t.item_type === 'code_example').map(t => t.item_id));
-    const completedNoteIds = new Set(userCompletedTasks.data.filter(t => t.item_type === 'note').map(t => t.item_id));
+    // Completed topics count (todos is the topics table)
+    const completedQuestionIds = new Set(userCompletedTasks.filter(t => t.item_type === 'question').map(t => t.item_id));
+    const completedExampleIds = new Set(userCompletedTasks.filter(t => t.item_type === 'code_example').map(t => t.item_id));
+    const completedNoteIds = new Set(userCompletedTasks.filter(t => t.item_type === 'note').map(t => t.item_id));
 
     const topicQuestionsMap = {};
-    allQuestions.data.forEach(q => {
+    questions.forEach(q => {
       if (!topicQuestionsMap[q.todo_id]) topicQuestionsMap[q.todo_id] = [];
       topicQuestionsMap[q.todo_id].push(q.id);
     });
 
     const topicExamplesMap = {};
-    allExamples.data.forEach(e => {
+    codeExamples.forEach(e => {
       if (!topicExamplesMap[e.topic_id]) topicExamplesMap[e.topic_id] = [];
       topicExamplesMap[e.topic_id].push(e.id);
     });
 
     const topicNotesMap = {};
-    allNotes.data.forEach(n => {
+    notes.forEach(n => {
       if (!topicNotesMap[n.topic_id]) topicNotesMap[n.topic_id] = [];
       topicNotesMap[n.topic_id].push(n.id);
     });
@@ -107,23 +99,9 @@ export async function GET(req) {
       }
     });
 
-    // 5. Weekly activity
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const { data: recentTasks, error: recentError } = await supabase
-      .from('user_tasks')
-      .select('completed_at')
-      .eq('user_id', user.id)
-      .eq('status', 'Completed')
-      .gte('completed_at', sevenDaysAgo.toISOString())
-      .order('completed_at', { ascending: true });
-
-    if (recentError) throw recentError;
-
-    // Group by YYYY-MM-DD
+    // Group weekly activity by YYYY-MM-DD
     const activityMap = {};
-    (recentTasks || []).forEach(t => {
+    (recentTasksRes.data || []).forEach(t => {
       if (t.completed_at) {
         const dateStr = new Date(t.completed_at).toISOString().split('T')[0];
         activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
@@ -135,33 +113,17 @@ export async function GET(req) {
       count
     }));
 
-    // 6. Recommended learning tasks (suggest up to 3 questions not yet completed)
-    const { data: completedQTasks, error: compQError } = await supabase
-      .from('user_tasks')
-      .select('item_id')
-      .eq('user_id', user.id)
-      .eq('item_type', 'question')
-      .eq('status', 'Completed');
+    // Recommended learning tasks (suggest up to 3 questions not yet completed)
+    const completedQIds = userCompletedTasks.filter(t => t.item_type === 'question').map(t => t.item_id);
+    const completedQSet = new Set(completedQIds);
 
-    if (compQError) throw compQError;
-
-    const completedQIds = (completedQTasks || []).map(t => t.item_id);
-
-    let qQuery = supabase.from('questions').select('id, title, todo_id, difficulty');
-    if (completedQIds.length > 0) {
-      qQuery = qQuery.not('id', 'in', `(${completedQIds.join(',')})`);
-    }
-    const { data: questionsList, error: recsError } = await qQuery.limit(3);
-    if (recsError) throw recsError;
-
-    // Fetch todos to map recommended question topic titles
-    const { data: todosList, error: todosListError } = await supabase.from('todos').select('id, title');
-    if (todosListError) throw todosListError;
+    const uncompletedQuestions = questions.filter(q => !completedQSet.has(q.id));
+    const questionsList = uncompletedQuestions.slice(0, 3);
 
     const todoTitles = {};
-    (todosList || []).forEach(t => { todoTitles[t.id] = t.title; });
+    (todos || []).forEach(t => { todoTitles[t.id] = t.title; });
 
-    const recommendations = (questionsList || []).map(q => ({
+    const recommendations = questionsList.map(q => ({
       id: q.id,
       title: q.title,
       topic_id: q.todo_id,
@@ -169,7 +131,7 @@ export async function GET(req) {
       difficulty: q.difficulty
     }));
 
-    // 7. Streak verification (reset streak if broken)
+    // Streak verification
     let currentStreak = user.streak;
     if (user.last_activity_date) {
       const today = new Date();
@@ -184,13 +146,16 @@ export async function GET(req) {
 
       if (dbLastActivityStr !== todayStr && dbLastActivityStr !== yesterdayStr) {
         currentStreak = 0;
+        console.time('Supabase: Reset user streak');
         await supabase
           .from('users')
           .update({ streak: 0 })
           .eq('id', user.id);
+        console.timeEnd('Supabase: Reset user streak');
       }
     }
 
+    console.timeEnd('API: GET /api/user/stats');
     return NextResponse.json({
       streak: currentStreak,
       completedTasksCount: completedItems,
@@ -202,6 +167,7 @@ export async function GET(req) {
     });
   } catch (error) {
     console.error('GET user stats error:', error);
+    console.timeEnd('API: GET /api/user/stats');
     return NextResponse.json({ message: 'Failed to retrieve stats.' }, { status: 500 });
   }
 }

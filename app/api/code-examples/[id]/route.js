@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { invalidateCache } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,22 +21,28 @@ async function checkUser(req) {
 }
 
 export async function PUT(req, { params }) {
+  const { id } = params;
+  const timerLabel = `API: PUT /api/code-examples/${id}`;
+  console.time(timerLabel);
   try {
     const user = await checkUser(req);
     if (!user || !user.can_edit) {
+      console.timeEnd(timerLabel);
       return NextResponse.json({ message: 'Access Denied. You do not have permission to edit content.' }, { status: 403 });
     }
 
-    const { id } = params;
     const { title, language, code, explanation, notes } = await req.json();
 
+    console.time('Supabase: Fetch Example (PUT)');
     const { data: example, error: fetchError } = await supabase
       .from('code_examples')
       .select('*')
       .eq('id', id)
       .maybeSingle();
+    console.timeEnd('Supabase: Fetch Example (PUT)');
 
     if (fetchError || !example) {
+      console.timeEnd(timerLabel);
       return NextResponse.json({ message: 'Code example not found.' }, { status: 404 });
     }
 
@@ -46,9 +53,11 @@ export async function PUT(req, { params }) {
     const newNotes = notes !== undefined ? notes : example.notes;
 
     if (!newCode || newCode.trim() === '') {
+      console.timeEnd(timerLabel);
       return NextResponse.json({ message: 'Code block cannot be empty.' }, { status: 400 });
     }
 
+    console.time('Supabase: Update Code Example');
     const { data: updatedExample, error: updateError } = await supabase
       .from('code_examples')
       .update({
@@ -61,38 +70,55 @@ export async function PUT(req, { params }) {
       .eq('id', id)
       .select()
       .single();
+    console.timeEnd('Supabase: Update Code Example');
 
     if (updateError) throw updateError;
 
+    // Invalidate Cache
+    invalidateCache();
+
+    console.timeEnd(timerLabel);
     return NextResponse.json(updatedExample);
   } catch (error) {
     console.error('PUT code example error:', error);
+    console.timeEnd(timerLabel);
     return NextResponse.json({ message: 'Failed to update code example.' }, { status: 500 });
   }
 }
 
 export async function DELETE(req, { params }) {
+  const { id } = params;
+  const timerLabel = `API: DELETE /api/code-examples/${id}`;
+  console.time(timerLabel);
   try {
     const user = await checkUser(req);
     if (!user || !user.can_delete) {
+      console.timeEnd(timerLabel);
       return NextResponse.json({ message: 'Access Denied. You do not have permission to delete content.' }, { status: 403 });
     }
 
-    const { id } = params;
+    console.time('Supabase: Delete Code Example');
     const { data: deletedExample, error } = await supabase
       .from('code_examples')
       .delete()
       .eq('id', id)
       .select('id')
       .maybeSingle();
+    console.timeEnd('Supabase: Delete Code Example');
 
     if (error || !deletedExample) {
+      console.timeEnd(timerLabel);
       return NextResponse.json({ message: 'Code example not found.' }, { status: 404 });
     }
 
+    // Invalidate Cache
+    invalidateCache();
+
+    console.timeEnd(timerLabel);
     return NextResponse.json({ message: 'Code example deleted successfully.' });
   } catch (error) {
     console.error('DELETE code example error:', error);
+    console.timeEnd(timerLabel);
     return NextResponse.json({ message: 'Failed to delete code example.' }, { status: 500 });
   }
 }

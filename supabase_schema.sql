@@ -1,6 +1,5 @@
 -- Supabase SQL Database Migration Schema
--- Use this file to manually run migration queries in your Supabase SQL Editor if needed.
--- Note: The application will also automatically attempt to initialize this schema upon the first database query.
+-- Use this file to manually run migration queries in your Supabase SQL Editor.
 
 -- 1. Create users table
 CREATE TABLE IF NOT EXISTS users (
@@ -25,8 +24,8 @@ INSERT INTO users (username, password, role, approved, can_view, can_edit, can_d
 VALUES ('user', '1234', 'user', true, true, false, false)
 ON CONFLICT (username) DO NOTHING;
 
--- 2. Create topics (curriculum topics) table
-CREATE TABLE IF NOT EXISTS topics (
+-- 2. Ensure todos (curriculum topics) table exists and has necessary columns
+CREATE TABLE IF NOT EXISTS todos (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   category VARCHAR(255) DEFAULT 'General',
@@ -36,10 +35,16 @@ CREATE TABLE IF NOT EXISTS topics (
   completed BOOLEAN DEFAULT false
 );
 
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS category VARCHAR(255) DEFAULT 'General';
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS difficulty VARCHAR(50) DEFAULT 'Beginner';
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS estimated_time VARCHAR(100) DEFAULT '1 hour';
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS created_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS completed BOOLEAN DEFAULT false;
+
 -- 3. Create questions table
 CREATE TABLE IF NOT EXISTS questions (
   id SERIAL PRIMARY KEY,
-  topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
+  todo_id INTEGER REFERENCES todos(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
   description TEXT DEFAULT '',
   difficulty VARCHAR(50) DEFAULT 'Beginner',
@@ -50,13 +55,19 @@ CREATE TABLE IF NOT EXISTS questions (
   notes TEXT DEFAULT ''
 );
 
--- Safe alter statement in case table already exists
+-- Ensure correct columns exist on questions
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS difficulty VARCHAR(50) DEFAULT 'Beginner';
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS tags VARCHAR(255) DEFAULT '';
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS answer TEXT DEFAULT '';
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS code TEXT DEFAULT '';
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS explanation TEXT DEFAULT '';
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';
 
 -- 4. Create code examples table
 CREATE TABLE IF NOT EXISTS code_examples (
   id SERIAL PRIMARY KEY,
-  topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
+  topic_id INTEGER REFERENCES todos(id) ON DELETE CASCADE,
   title VARCHAR(255) DEFAULT '',
   language VARCHAR(100) DEFAULT 'Java',
   code TEXT NOT NULL,
@@ -67,7 +78,7 @@ CREATE TABLE IF NOT EXISTS code_examples (
 -- 5. Create notes table
 CREATE TABLE IF NOT EXISTS notes (
   id SERIAL PRIMARY KEY,
-  topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
+  topic_id INTEGER REFERENCES todos(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL
 );

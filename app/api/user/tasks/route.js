@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getCachedCurriculum } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,46 +21,41 @@ async function checkUser(req) {
 }
 
 export async function GET(req) {
+  console.time('API: GET /api/user/tasks');
   try {
     const user = await checkUser(req);
     if (!user) {
+      console.timeEnd('API: GET /api/user/tasks');
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
     }
 
     // Fetch user tasks
+    console.time('Supabase: Fetch user_tasks (GET tasks)');
     const { data: userTasks, error: tasksError } = await supabase
       .from('user_tasks')
       .select('*')
       .eq('user_id', user.id)
       .order('id', { ascending: false });
+    console.timeEnd('Supabase: Fetch user_tasks (GET tasks)');
 
     if (tasksError) throw tasksError;
 
     if (!userTasks || userTasks.length === 0) {
+      console.timeEnd('API: GET /api/user/tasks');
       return NextResponse.json([]);
     }
 
-    // Resolve detailed information in parallel (todos represents topics)
-    const [topicsRes, questionsRes, examplesRes, notesRes] = await Promise.all([
-      supabase.from('todos').select('id, title, category, difficulty, estimated_time'),
-      supabase.from('questions').select('id, title, todo_id, difficulty'),
-      supabase.from('code_examples').select('id, title, topic_id, language'),
-      supabase.from('notes').select('id, title, topic_id')
-    ]);
-
-    if (topicsRes.error) throw topicsRes.error;
-    if (questionsRes.error) throw questionsRes.error;
-    if (examplesRes.error) throw examplesRes.error;
-    if (notesRes.error) throw notesRes.error;
+    // Fetch curriculum from cache
+    const { todos, questions, codeExamples, notes } = await getCachedCurriculum();
 
     const topicsMap = {};
-    topicsRes.data.forEach(t => { topicsMap[t.id] = t; });
+    todos.forEach(t => { topicsMap[t.id] = t; });
     const questionsMap = {};
-    questionsRes.data.forEach(q => { questionsMap[q.id] = q; });
+    questions.forEach(q => { questionsMap[q.id] = q; });
     const examplesMap = {};
-    examplesRes.data.forEach(e => { examplesMap[e.id] = e; });
+    codeExamples.forEach(e => { examplesMap[e.id] = e; });
     const notesMap = {};
-    notesRes.data.forEach(n => { notesMap[n.id] = n; });
+    notes.forEach(n => { notesMap[n.id] = n; });
 
     const enrichedTasks = userTasks.map(task => {
       let itemDetails = null;
@@ -82,27 +78,32 @@ export async function GET(req) {
       };
     });
 
+    console.timeEnd('API: GET /api/user/tasks');
     return NextResponse.json(enrichedTasks);
   } catch (error) {
     console.error('GET user tasks error:', error);
+    console.timeEnd('API: GET /api/user/tasks');
     return NextResponse.json({ message: 'Failed to retrieve tasks.' }, { status: 500 });
   }
 }
 
 export async function POST(req) {
+  console.time('API: POST /api/user/tasks');
   try {
     const user = await checkUser(req);
     if (!user) {
+      console.timeEnd('API: POST /api/user/tasks');
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
     }
 
     const { itemType, itemId, status, savedForLater } = await req.json();
 
     if (!itemType || !itemId) {
+      console.timeEnd('API: POST /api/user/tasks');
       return NextResponse.json({ message: 'itemType and itemId are required.' }, { status: 400 });
     }
 
-    // Insert task or update status / saved state if it already exists (upsert)
+    console.time('Supabase: Upsert user_tasks');
     const { data: task, error: upsertError } = await supabase
       .from('user_tasks')
       .upsert({
@@ -114,12 +115,15 @@ export async function POST(req) {
       }, { onConflict: 'user_id,item_type,item_id' })
       .select()
       .single();
+    console.timeEnd('Supabase: Upsert user_tasks');
 
     if (upsertError) throw upsertError;
 
+    console.timeEnd('API: POST /api/user/tasks');
     return NextResponse.json(task);
   } catch (error) {
     console.error('POST user task error:', error);
+    console.timeEnd('API: POST /api/user/tasks');
     return NextResponse.json({ message: 'Failed to save task.' }, { status: 500 });
   }
 }
