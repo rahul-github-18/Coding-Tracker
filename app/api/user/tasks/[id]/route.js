@@ -13,7 +13,7 @@ async function checkUser(req) {
     .eq('id', reqUserId)
     .maybeSingle();
 
-  if (error || !user || !user.approved) {
+  if (error || !user) {
     return null;
   }
   return user;
@@ -24,6 +24,10 @@ export async function PUT(req, { params }) {
     const user = await checkUser(req);
     if (!user) {
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
+    }
+
+    if (!user.approved && user.role !== 'admin') {
+      return NextResponse.json({ message: 'Your account is pending admin approval. You cannot edit tasks.' }, { status: 403 });
     }
 
     const { id } = params;
@@ -127,6 +131,10 @@ export async function DELETE(req, { params }) {
     const user = await checkUser(req);
     if (!user) {
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
+    }
+
+    if (!user.approved && user.role !== 'admin') {
+      return NextResponse.json({ message: 'Your account is pending admin approval. You cannot delete tasks.' }, { status: 403 });
     }
 
     const { id } = params;

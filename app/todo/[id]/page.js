@@ -73,7 +73,7 @@ function NotesCodeModal({ activeModal, activeQuestion, closeModal, onSave, readO
             {/* Code Column */}
             <div className="editor-pane">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label className="form-label" style={{ fontWeight: '600', margin: 0 }}>Java Code Editor</label>
+                <label className="form-label" style={{ fontWeight: '600', margin: 0 }}>Working Code</label>
                 <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={handleCopyCode}>
                   Copy Code
                 </button>
@@ -302,6 +302,10 @@ function TodoDetailContent({ searchQuery }) {
   };
 
   const handleTaskAction = async (itemId, type, action) => {
+    if (user && !user.approved && user.role !== 'admin') {
+      setError('Your account is pending admin approval. You cannot add or modify tasks.');
+      return;
+    }
     setError('');
     setSuccess('');
     try {
@@ -356,6 +360,12 @@ function TodoDetailContent({ searchQuery }) {
 
   return (
     <div className="detail-layout" style={{ flex: 1 }}>
+      {user && !user.approved && user.role !== 'admin' && (
+        <div style={{ padding: '16px', backgroundColor: '#fef7e0', border: '1px solid #feebc8', borderRadius: '8px', color: '#c05621', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <span>⚠️</span>
+          <span>Your account is pending admin approval. You can view study notes and questions but cannot add tasks or mark completions.</span>
+        </div>
+      )}
       {/* Back button and title */}
       <div className="detail-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>

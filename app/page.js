@@ -347,6 +347,13 @@ function DashboardContent({ searchQuery }) {
         </div>
       </div>
 
+      {user.role !== 'admin' && !user.approved && (
+        <div style={{ padding: '16px', backgroundColor: '#fef7e0', border: '1px solid #feebc8', borderRadius: '8px', color: '#c05621', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <span>⚠️</span>
+          <span>Your account is pending admin approval. You can browse topics but cannot add tasks to your daily board yet.</span>
+        </div>
+      )}
+
       {error && <div className="login-error">{error}</div>}
       {success && <div className="save-indicator" style={{ marginBottom: '12px' }}>{success}</div>}
 
@@ -443,6 +450,7 @@ function DashboardContent({ searchQuery }) {
                         className="btn btn-primary" 
                         style={{ padding: '4px 8px', fontSize: '0.7rem' }}
                         onClick={() => handleQuickAdd(rec.id, 'question')}
+                        disabled={!user.approved && user.role !== 'admin'}
                       >
                         + Add
                       </button>
@@ -526,6 +534,7 @@ function DashboardContent({ searchQuery }) {
                       className="btn btn-secondary" 
                       style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
                       onClick={() => handleQuickAdd(topic.id, 'topic')}
+                      disabled={!user.approved && user.role !== 'admin'}
                     >
                       + Add to Today
                     </button>

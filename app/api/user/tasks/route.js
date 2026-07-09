@@ -14,7 +14,7 @@ async function checkUser(req) {
     .eq('id', reqUserId)
     .maybeSingle();
 
-  if (error || !user || !user.approved) {
+  if (error || !user) {
     return null;
   }
   return user;
@@ -94,6 +94,11 @@ export async function POST(req) {
     if (!user) {
       console.timeEnd('API: POST /api/user/tasks');
       return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
+    }
+
+    if (!user.approved && user.role !== 'admin') {
+      console.timeEnd('API: POST /api/user/tasks');
+      return NextResponse.json({ message: 'Your account is pending admin approval. You cannot add tasks.' }, { status: 403 });
     }
 
     const { itemType, itemId, status, savedForLater } = await req.json();

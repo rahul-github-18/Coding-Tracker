@@ -38,12 +38,6 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Invalid username or password' }, { status: 401 });
     }
 
-    // Check if approved
-    if (!user.approved) {
-      console.timeEnd('API: POST /api/auth/login');
-      return NextResponse.json({ message: 'Your account is pending approval by the admin.' }, { status: 403 });
-    }
-
     // Success - return user without password
     const { password: _, ...userWithoutPassword } = user;
     console.timeEnd('API: POST /api/auth/login');
