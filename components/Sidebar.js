@@ -68,14 +68,7 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
             Curriculum
           </div>
         </li>
-        <li>
-          <div
-            className={`sidebar-link ${pathname === '/' && filter === 'today' ? 'active' : ''}`}
-            onClick={() => handleNavigate('/', 'today')}
-          >
-            Today's Todos
-          </div>
-        </li>
+
         <li>
           <div
             className={`sidebar-link ${pathname === '/share-code' ? 'active' : ''}`}

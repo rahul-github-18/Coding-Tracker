@@ -970,119 +970,7 @@ function DashboardContent({ searchQuery }) {
       {error && <div className="login-error">{error}</div>}
       {success && <div className="save-indicator" style={{ marginBottom: '12px' }}>{success}</div>}
 
-      {/* Conditional module-wise content rendering based on selected Navbar filter */}
-      {filter ? (
-        filter === 'today' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', alignItems: 'start' }}>
-            
-            {/* Today's Tasks board */}
-            <div className="card" style={{ minHeight: 'auto', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                  Today's Active Tasks
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Completed: {renderTasks.filter(t => t.status === 'Completed').length} / {renderTasks.length}
-                </span>
-              </div>
-
-              {renderTasks.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
-                  <p style={{ margin: 0 }}>Your tasks list is empty.</p>
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0 0 0' }}>Browse curriculum topics in Dashboard to add learning tasks.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {renderTasks.map((task) => (
-                    <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '0.7rem', padding: '1px 4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
-                            {task.item_type}
-                          </span>
-                          <span 
-                            style={{ 
-                              fontWeight: '600', 
-                              color: 'var(--text-heading)',
-                              textDecoration: task.status === 'Completed' ? 'line-through' : 'none',
-                              opacity: task.status === 'Completed' ? 0.6 : 1
-                            }}
-                          >
-                            {task.title}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button 
-                          onClick={() => handleToggleItemStatus(task)}
-                          className="btn" 
-                          style={{ 
-                            padding: '4px 10px', 
-                            fontSize: '0.75rem',
-                            backgroundColor: task.status === 'Completed' ? '#e6f4ea' : task.status === 'In Progress' ? '#e8f0fe' : 'var(--btn-secondary-bg)',
-                            color: task.status === 'Completed' ? '#137333' : task.status === 'In Progress' ? '#1a73e8' : 'var(--text-color)',
-                            border: '1px solid ' + (task.status === 'Completed' ? '#ceead6' : task.status === 'In Progress' ? '#d2e3fc' : 'var(--card-border)')
-                          }}
-                        >
-                          {task.status}
-                        </button>
-                        {task.taskId && (
-                          <button 
-                            onClick={() => handleRemoveTaskItem(task)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: '4px' }}
-                            title="Remove from board"
-                          >
-                            &times;
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Learning Statistics & Recommendations Column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {/* Recommendations Card */}
-              <div className="card" style={{ minHeight: 'auto', padding: '24px' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', color: 'var(--text-heading)' }}>
-                  Recommended for You
-                </h3>
-                {userStats.recommendations && userStats.recommendations.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {userStats.recommendations.map(rec => (
-                      <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '6px' }}>
-                        <div style={{ flex: 1, marginRight: '8px' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
-                            {rec.topic_title}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-heading)' }}>
-                            {rec.title}
-                          </div>
-                        </div>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ padding: '4px 8px', fontSize: '0.7rem' }}
-                          onClick={() => handleQuickAdd(rec.id, 'question')}
-                          disabled={!user.approved && user.role !== 'admin'}
-                        >
-                          + Add
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                    Awesome job! No unfinished tasks left to recommend.
-                  </p>
-                )}
-              </div>
-            </div>
-
-          </div>
-        ) : (
+      {filter === 'all' ? (
           /* Curriculum Management Split View (Master-Detail) */
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
             
@@ -1398,8 +1286,7 @@ function DashboardContent({ searchQuery }) {
             })()}
 
           </div>
-        )
-      ) : (
+        ) : (
         /* Default Home Dashboard - explore curriculum and general progress */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
@@ -1463,15 +1350,7 @@ function DashboardContent({ searchQuery }) {
                     </div>
                   </div>
 
-                  <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button 
-                      className="btn btn-secondary" 
-                      style={{ padding: '4px 8px', fontSize: '0.75rem' }} 
-                      onClick={() => handleQuickAdd(topic.id, 'topic')}
-                      disabled={!user.approved && user.role !== 'admin'}
-                    >
-                      + Add to Today
-                    </button>
+                  <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                     <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/todo/${topic.id}`)}>
                       Study Topic &rarr;
                     </button>
