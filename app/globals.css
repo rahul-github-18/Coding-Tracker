@@ -83,16 +83,17 @@ body {
 /* Common Layout Elements */
 .app-container {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
 /* Sidebar Styling */
 .sidebar {
+  display: none;
   width: 260px;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   padding: 24px;
-  display: flex;
   flex-direction: column;
 }
 
@@ -150,7 +151,40 @@ body {
 
 .header-left {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.desktop-nav-link {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.desktop-nav-link:hover {
+  color: var(--link-color) !important;
+  background-color: var(--btn-secondary-bg);
+}
+
+.desktop-nav-link.active {
+  color: var(--link-color) !important;
+  background-color: var(--btn-secondary-bg);
+}
+
+.desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-title {
@@ -602,11 +636,18 @@ body {
 }
 
 @media (max-width: 768px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  .desktop-actions {
+    display: none !important;
+  }
   .app-container {
     flex-direction: row;
     position: relative;
   }
   .sidebar {
+    display: flex !important;
     position: fixed;
     top: 0;
     left: 0;
