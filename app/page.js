@@ -10,6 +10,7 @@ function DashboardContent({ searchQuery }) {
   const [topics, setTopics] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
   const [selectedTopicId, setSelectedTopicId] = useState(null);
+  const [questionPage, setQuestionPage] = useState(0);
   const [usersList, setUsersList] = useState([]);
   const [userTasks, setUserTasks] = useState([]);
   const [userStats, setUserStats] = useState({
@@ -456,17 +457,19 @@ function DashboardContent({ searchQuery }) {
         </div>
         
         {/* Streak details */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'rgba(255,255,255,0.07)', padding: '12px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <span style={{ fontSize: '1.75rem' }}>🔥</span>
-          <div>
-            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffedd5', lineHeight: '1.2' }}>
-              {userStats.streak} Days
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Learning Streak
+        {filter !== 'all' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'rgba(255,255,255,0.07)', padding: '12px 18px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <span style={{ fontSize: '1.75rem' }}>🔥</span>
+            <div>
+              <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ffedd5', lineHeight: '1.2' }}>
+                {userStats.streak} Days
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Learning Streak
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {user.role !== 'admin' && !user.approved && (
@@ -613,7 +616,10 @@ function DashboardContent({ searchQuery }) {
                     return (
                       <div 
                         key={group.id}
-                        onClick={() => setSelectedTopicId(group.id)}
+                        onClick={() => {
+                          setSelectedTopicId(group.id);
+                          setQuestionPage(0);
+                        }}
                         style={{
                           padding: '12px 16px',
                           borderRadius: '8px',
@@ -710,7 +716,7 @@ function DashboardContent({ searchQuery }) {
                         No questions registered under this curriculum topic.
                       </div>
                     ) : (
-                      activeGroup.questions.map((q) => (
+                      activeGroup.questions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => (
                         <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, marginRight: '16px' }}>
                             <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
@@ -749,6 +755,30 @@ function DashboardContent({ searchQuery }) {
                       ))
                     )}
                   </div>
+
+                  {activeGroup.questions.length > 10 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={() => setQuestionPage(p => Math.max(0, p - 1))}
+                        disabled={questionPage === 0}
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                      >
+                        &larr; Previous 10
+                      </button>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        Showing {questionPage * 10 + 1} - {Math.min((questionPage + 1) * 10, activeGroup.questions.length)} of {activeGroup.questions.length} Questions
+                      </span>
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={() => setQuestionPage(p => ((p + 1) * 10 < activeGroup.questions.length ? p + 1 : p))}
+                        disabled={(questionPage + 1) * 10 >= activeGroup.questions.length}
+                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                      >
+                        Next 10 &rarr;
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })()}
