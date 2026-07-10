@@ -68,10 +68,21 @@ export async function PUT(req, { params }) {
     if (updateError) throw updateError;
 
     if (!updatedUsers || updatedUsers.length === 0) {
-      console.timeEnd(timerLabel);
-      return NextResponse.json({ 
-        message: 'Could not update user. RLS policies on Supabase may be blocking writes. Run: ALTER TABLE users DISABLE ROW LEVEL SECURITY; in your Supabase SQL editor.' 
-      }, { status: 400 });
+      const { data: checkUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (checkUser) {
+        console.timeEnd(timerLabel);
+        return NextResponse.json({ 
+          message: 'Could not update user. RLS policies on Supabase are active and blocking writes. Please run: ALTER TABLE users DISABLE ROW LEVEL SECURITY; in your Supabase SQL editor.' 
+        }, { status: 400 });
+      } else {
+        console.timeEnd(timerLabel);
+        return NextResponse.json({ message: 'User not found.' }, { status: 404 });
+      }
     }
 
     console.timeEnd(timerLabel);
@@ -107,10 +118,18 @@ export async function DELETE(req, { params }) {
     if (deleteError) throw deleteError;
 
     if (!deletedRows || deletedRows.length === 0) {
-      console.timeEnd(timerLabel);
-      return NextResponse.json({ 
-        message: 'Could not delete user. RLS policies on Supabase may be blocking writes. Run: ALTER TABLE users DISABLE ROW LEVEL SECURITY; in your Supabase SQL editor.' 
-      }, { status: 400 });
+      const { data: checkUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (checkUser) {
+        console.timeEnd(timerLabel);
+        return NextResponse.json({ 
+          message: 'Could not delete user. RLS policies on Supabase are active and blocking writes. Please run: ALTER TABLE users DISABLE ROW LEVEL SECURITY; in your Supabase SQL editor.' 
+        }, { status: 400 });
+      }
     }
 
     console.timeEnd(timerLabel);
