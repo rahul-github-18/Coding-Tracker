@@ -3,22 +3,6 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-async function checkUser(req) {
-  const reqUserId = req.headers.get('x-user-id');
-  if (!reqUserId) return null;
-
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id, approved, role, can_view')
-    .eq('id', reqUserId)
-    .maybeSingle();
-
-  if (error || !user || !user.approved) {
-    return null;
-  }
-  return user;
-}
-
 async function cleanExpiredCodes() {
   try {
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
@@ -36,18 +20,20 @@ async function cleanExpiredCodes() {
 
 export async function GET(req) {
   try {
-    const user = await checkUser(req);
-    if (!user || !user.can_view) {
-      return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
-    }
-
     // Clean up expired codes in background
     cleanExpiredCodes();
 
-    const { data: sharedCodes, error } = await supabase
-      .from('shared_codes')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { searchParams } = new URL(req.url);
+    const codeKey = searchParams.get('code');
+
+    let query = supabase.from('shared_codes').select('*');
+    if (codeKey) {
+      query = query.eq('title', codeKey);
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const { data: sharedCodes, error } = await query;
 
     if (error) throw error;
 
@@ -74,11 +60,6 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = await checkUser(req);
-    if (!user || !user.can_view) {
-      return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
-    }
-
     const { title, code } = await req.json();
 
     if (!title || title.trim() === '') {

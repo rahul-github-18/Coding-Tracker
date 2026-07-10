@@ -58,6 +58,17 @@ const Login = () => {
       <div className="absolute top-1/4 left-1/4 h-80 w-80 rounded-full bg-sky-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-violet-500/10 blur-[100px] pointer-events-none" />
 
+      {/* Top Floating Navigation for Code Sharing */}
+      <div className="w-full max-w-[1000px] flex justify-end items-center z-20 py-2 px-4 mt-2">
+        <button
+          onClick={() => router.push('/share-code')}
+          className="btn btn-secondary text-xs px-4 py-2 bg-slate-900/60 backdrop-blur border border-slate-800/80 text-sky-400 hover:text-sky-300 transition duration-200 cursor-pointer rounded-lg font-bold shadow-lg"
+          style={{ cursor: 'pointer' }}
+        >
+          ⚡ Share Code (No Login)
+        </button>
+      </div>
+
       {/* Main Content Row */}
       <div className="flex-1 flex items-center justify-center w-full z-10">
         {/* Outer Row Container */}

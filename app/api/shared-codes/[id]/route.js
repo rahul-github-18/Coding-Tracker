@@ -3,29 +3,8 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
-async function checkUser(req) {
-  const reqUserId = req.headers.get('x-user-id');
-  if (!reqUserId) return null;
-
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('id, approved, role, can_view')
-    .eq('id', reqUserId)
-    .maybeSingle();
-
-  if (error || !user || !user.approved) {
-    return null;
-  }
-  return user;
-}
-
 export async function DELETE(req, { params }) {
   try {
-    const user = await checkUser(req);
-    if (!user || !user.can_view) {
-      return NextResponse.json({ message: 'Access Denied. Insufficient permissions.' }, { status: 403 });
-    }
-
     const { id } = params;
     const { data: deletedSnippet, error } = await supabase
       .from('shared_codes')
