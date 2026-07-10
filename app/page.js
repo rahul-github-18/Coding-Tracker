@@ -41,6 +41,7 @@ function DashboardContent({ searchQuery }) {
   const [editingTopic, setEditingTopic] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [expandedQuestionId, setExpandedQuestionId] = useState(null);
+  const [questionUploadMode, setQuestionUploadMode] = useState('manual');
   const [newQuestionForm, setNewQuestionForm] = useState({
     title: '',
     difficulty: 'Beginner',
@@ -248,6 +249,74 @@ function DashboardContent({ searchQuery }) {
     } catch (err) {
       setError('Failed to delete question.');
     }
+  };
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setSuccess('');
+
+    import('xlsx').then((XLSX) => {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          const questionsToInsert = [];
+          rows.forEach((row, index) => {
+            if (index === 0) {
+              const col1 = String(row[0] || '').toLowerCase();
+              if (col1.includes('question') || col1.includes('title') || col1.includes('name')) {
+                return; // skip header row
+              }
+            }
+
+            const title = row[0];
+            const explanation = row[1] || '';
+            const code = row[2] || '';
+
+            if (title && String(title).trim() !== '') {
+              questionsToInsert.push({
+                title: String(title).trim(),
+                difficulty: 'Beginner',
+                tags: '',
+                description: '',
+                code: String(code),
+                explanation: String(explanation)
+              });
+            }
+          });
+
+          if (questionsToInsert.length === 0) {
+            setError('No valid questions found in the Excel sheet.');
+            return;
+          }
+
+          setSuccess(`Auto-importing ${questionsToInsert.length} questions... Please wait.`);
+          
+          for (const q of questionsToInsert) {
+            await questionService.createQuestion(selectedTopicId, q);
+          }
+
+          setSuccess(`Successfully imported ${questionsToInsert.length} questions!`);
+          setActiveForm(null);
+          loadDashboardData(user);
+        } catch (err) {
+          console.error(err);
+          setError('Failed to parse Excel sheet. Ensure layout has Question, Explanation, and Code columns.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }).catch(err => {
+      console.error(err);
+      setError('Could not load Excel parser dependency.');
+    });
   };
 
   const handleExportTopicPDF = (topic) => {
@@ -503,86 +572,180 @@ function DashboardContent({ searchQuery }) {
           )}
 
           {activeForm === 'createQuestion' && (
-            <form onSubmit={handleCreateQuestionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-heading)' }}>
                 Add Question to Topic
               </h3>
-              <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Write a SQL query to find..." 
-                  className="form-input" 
-                  value={newQuestionForm.title} 
-                  onChange={e => setNewQuestionForm({ ...newQuestionForm, title: e.target.value })} 
-                  required 
-                  style={{ marginTop: '4px', width: '100%' }}
-                />
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--card-border)', marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: questionUploadMode === 'manual' ? '2.2px solid var(--link-color)' : 'none',
+                    color: questionUploadMode === 'manual' ? 'var(--link-color)' : 'var(--text-muted)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setQuestionUploadMode('manual')}
+                >
+                  Single Question Form
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: questionUploadMode === 'excel' ? '2.2px solid var(--link-color)' : 'none',
+                    color: questionUploadMode === 'excel' ? 'var(--link-color)' : 'var(--text-muted)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setQuestionUploadMode('excel')}
+                >
+                  Upload Excel (.xlsx, .csv)
+                </button>
               </div>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
-                  <select 
-                    className="form-input" 
-                    value={newQuestionForm.difficulty} 
-                    onChange={e => setNewQuestionForm({ ...newQuestionForm, difficulty: e.target.value })}
-                    style={{ marginTop: '4px', width: '100%' }}
-                  >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                  </select>
+
+              {questionUploadMode === 'excel' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{
+                    border: '2.5px dashed var(--card-border)',
+                    borderRadius: '8px',
+                    padding: '36px 20px',
+                    textAlign: 'center',
+                    backgroundColor: 'var(--list-item-bg)',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.2s ease',
+                    position: 'relative'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px', color: 'var(--text-muted)' }}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p style={{ margin: '0 0 6px 0', fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-heading)' }}>
+                      Drag & drop your Excel or CSV file here, or click to browse
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Supports .xlsx, .xls, and .csv files
+                    </p>
+                    <input 
+                      type="file" 
+                      accept=".xlsx, .xls, .csv" 
+                      onChange={handleExcelUpload} 
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        opacity: 0,
+                        cursor: 'pointer',
+                        width: '100%',
+                        height: '100%'
+                      }}
+                    />
+                  </div>
+                  
+                  <div style={{ padding: '14px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <span style={{ fontWeight: '700', color: 'var(--text-heading)', fontSize: '0.85rem' }}>Excel Columns Layout Requirement:</span>
+                    <span>• <strong>Column 1:</strong> Question Title (Required)</span>
+                    <span>• <strong>Column 2:</strong> Explanation / Notes (Optional)</span>
+                    <span>• <strong>Column 3:</strong> Starter / Reference Code (Optional)</span>
+                    <span style={{ fontSize: '0.75rem', fontStyle: 'italic', marginTop: '4px' }}>Note: Row 1 containing column headers will be automatically skipped.</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. SQL, Window Functions" 
-                    className="form-input" 
-                    value={newQuestionForm.tags} 
-                    onChange={e => setNewQuestionForm({ ...newQuestionForm, tags: e.target.value })} 
-                    style={{ marginTop: '4px', width: '100%' }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Description / Instructions</label>
-                <textarea 
-                  placeholder="Problem details..." 
-                  className="form-input" 
-                  rows={3}
-                  value={newQuestionForm.description} 
-                  onChange={e => setNewQuestionForm({ ...newQuestionForm, description: e.target.value })} 
-                  style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
-                <textarea 
-                  placeholder="// Provide starter code or reference solution..." 
-                  className="form-input" 
-                  rows={4}
-                  value={newQuestionForm.code} 
-                  onChange={e => setNewQuestionForm({ ...newQuestionForm, code: e.target.value })} 
-                  style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
-                <textarea 
-                  placeholder="Solution steps or markdown explanation..." 
-                  className="form-input" 
-                  rows={3}
-                  value={newQuestionForm.explanation} 
-                  onChange={e => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })} 
-                  style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create Question</button>
-              </div>
-            </form>
+              ) : (
+                <form onSubmit={handleCreateQuestionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Write a SQL query to find..." 
+                      className="form-input" 
+                      value={newQuestionForm.title} 
+                      onChange={e => setNewQuestionForm({ ...newQuestionForm, title: e.target.value })} 
+                      required 
+                      style={{ marginTop: '4px', width: '100%' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
+                      <select 
+                        className="form-input" 
+                        value={newQuestionForm.difficulty} 
+                        onChange={e => setNewQuestionForm({ ...newQuestionForm, difficulty: e.target.value })}
+                        style={{ marginTop: '4px', width: '100%' }}
+                      >
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. SQL, Window Functions" 
+                        className="form-input" 
+                        value={newQuestionForm.tags} 
+                        onChange={e => setNewQuestionForm({ ...newQuestionForm, tags: e.target.value })} 
+                        style={{ marginTop: '4px', width: '100%' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Description / Instructions</label>
+                    <textarea 
+                      placeholder="Problem details..." 
+                      className="form-input" 
+                      rows={3}
+                      value={newQuestionForm.description} 
+                      onChange={e => setNewQuestionForm({ ...newQuestionForm, description: e.target.value })} 
+                      style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
+                    <textarea 
+                      placeholder="// Provide starter code or reference solution..." 
+                      className="form-input" 
+                      rows={4}
+                      value={newQuestionForm.code} 
+                      onChange={e => setNewQuestionForm({ ...newQuestionForm, code: e.target.value })} 
+                      style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
+                    <textarea 
+                      placeholder="Solution steps or markdown explanation..." 
+                      className="form-input" 
+                      rows={3}
+                      value={newQuestionForm.explanation} 
+                      onChange={e => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })} 
+                      style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary">Create Question</button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {activeForm === 'editQuestion' && editingQuestion && (
