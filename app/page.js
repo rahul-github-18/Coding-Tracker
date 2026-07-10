@@ -878,18 +878,39 @@ function DashboardContent({ searchQuery }) {
 
   // User Actions
   // User Actions
+  // User Actions
   const handleToggleItemStatus = async (item) => {
     if (user && !user.approved && user.role !== 'admin') {
       setError('Your account is pending admin approval.');
       return;
     }
     setError('');
+    
+    let nextStatus = 'Pending';
+    if (item.status === 'Pending') nextStatus = 'In Progress';
+    else if (item.status === 'In Progress') nextStatus = 'Completed';
+
+    // Optimistic UI Update
+    const backupTasks = [...userTasks];
+    if (item.taskId) {
+      if (nextStatus === 'Pending') {
+        setUserTasks(prev => prev.filter(t => t.id !== item.taskId));
+      } else {
+        setUserTasks(prev => prev.map(t => t.id === item.taskId ? { ...t, status: nextStatus } : t));
+      }
+    } else {
+      const tempTask = {
+        id: -Date.now(),
+        item_type: item.item_type,
+        item_id: item.dbId,
+        status: 'In Progress',
+        user_id: user.id
+      };
+      setUserTasks(prev => [...prev, tempTask]);
+    }
+
     try {
       if (item.taskId) {
-        let nextStatus = 'Pending';
-        if (item.status === 'Pending') nextStatus = 'In Progress';
-        else if (item.status === 'In Progress') nextStatus = 'Completed';
-        
         if (nextStatus === 'Pending') {
           await taskService.removeTask(item.taskId);
         } else {
@@ -898,8 +919,14 @@ function DashboardContent({ searchQuery }) {
       } else {
         await taskService.addTask(item.item_type, item.dbId, 'In Progress');
       }
-      loadDashboardData(user);
+      
+      // Fetch latest updates in background
+      const freshTasks = await taskService.getUserTasks();
+      setUserTasks(freshTasks || []);
+      const freshStats = await taskService.getUserStats();
+      setUserStats(freshStats);
     } catch (err) {
+      setUserTasks(backupTasks);
       setError('Failed to update task status.');
     }
   };
@@ -908,10 +935,16 @@ function DashboardContent({ searchQuery }) {
     if (!item.taskId) return;
     if (!window.confirm('Are you sure you want to remove this task?')) return;
     setError('');
+    const backupTasks = [...userTasks];
+    setUserTasks(prev => prev.filter(t => t.id !== item.taskId));
     try {
       await taskService.removeTask(item.taskId);
-      loadDashboardData(user);
+      const freshTasks = await taskService.getUserTasks();
+      setUserTasks(freshTasks || []);
+      const freshStats = await taskService.getUserStats();
+      setUserStats(freshStats);
     } catch (err) {
+      setUserTasks(backupTasks);
       setError('Failed to remove task.');
     }
   };
@@ -923,12 +956,25 @@ function DashboardContent({ searchQuery }) {
     }
     setError('');
     setSuccess('');
+    const backupTasks = [...userTasks];
+    const tempTask = {
+      id: -Date.now(),
+      item_type: type,
+      item_id: itemId,
+      status: 'Pending',
+      user_id: user.id
+    };
+    setUserTasks(prev => [...prev, tempTask]);
     try {
       await taskService.addTask(type, itemId, 'Pending');
       setSuccess('Item added to your daily tasks!');
-      loadDashboardData(user);
+      const freshTasks = await taskService.getUserTasks();
+      setUserTasks(freshTasks || []);
+      const freshStats = await taskService.getUserStats();
+      setUserStats(freshStats);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
+      setUserTasks(backupTasks);
       setError('Item is already in your tasks list.');
     }
   };
@@ -953,17 +999,35 @@ function DashboardContent({ searchQuery }) {
     setSuccess('');
     
     const existingTask = userTasks.find(t => t.item_type === 'topic' && t.item_id === topicId);
+    const backupTasks = [...userTasks];
+
+    if (existingTask) {
+      setUserTasks(prev => prev.filter(t => t.id !== existingTask.id));
+      setSuccess('Topic removed from progress.');
+    } else {
+      const tempTask = {
+        id: -Date.now(),
+        item_type: 'topic',
+        item_id: topicId,
+        status: 'In Progress',
+        user_id: user.id
+      };
+      setUserTasks(prev => [...prev, tempTask]);
+      setSuccess('Topic added to progress.');
+    }
     
     try {
       if (existingTask) {
         await taskService.removeTask(existingTask.id);
-        setSuccess('Topic removed from progress.');
       } else {
         await taskService.addTask('topic', topicId, 'In Progress');
-        setSuccess('Topic added to progress.');
       }
-      loadDashboardData(user);
+      const freshTasks = await taskService.getUserTasks();
+      setUserTasks(freshTasks || []);
+      const freshStats = await taskService.getUserStats();
+      setUserStats(freshStats);
     } catch (err) {
+      setUserTasks(backupTasks);
       setError('Failed to update topic selection.');
     }
   };
@@ -977,6 +1041,24 @@ function DashboardContent({ searchQuery }) {
     setSuccess('');
 
     const existingTask = userTasks.find(t => t.item_type === 'question' && t.item_id === questionId);
+    const backupTasks = [...userTasks];
+
+    if (existingTask) {
+      if (existingTask.status === 'Completed') {
+        setUserTasks(prev => prev.filter(t => t.id !== existingTask.id));
+      } else {
+        setUserTasks(prev => prev.map(t => t.id === existingTask.id ? { ...t, status: 'Completed' } : t));
+      }
+    } else {
+      const tempTask = {
+        id: -Date.now(),
+        item_type: 'question',
+        item_id: questionId,
+        status: 'Completed',
+        user_id: user.id
+      };
+      setUserTasks(prev => [...prev, tempTask]);
+    }
 
     try {
       if (existingTask) {
@@ -988,8 +1070,12 @@ function DashboardContent({ searchQuery }) {
       } else {
         await taskService.addTask('question', questionId, 'Completed');
       }
-      loadDashboardData(user);
+      const freshTasks = await taskService.getUserTasks();
+      setUserTasks(freshTasks || []);
+      const freshStats = await taskService.getUserStats();
+      setUserStats(freshStats);
     } catch (err) {
+      setUserTasks(backupTasks);
       setError('Failed to update question completion.');
     }
   };
