@@ -31,6 +31,10 @@ VALUES ('admin', 'admin@123', 'admin', true, true, true, true)
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, password, role, approved, can_view, can_edit, can_delete)
+VALUES ('rahul', 'admin@123', 'admin', true, true, true, true)
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO users (username, password, role, approved, can_view, can_edit, can_delete)
 VALUES ('user', '1234', 'user', true, true, false, false)
 ON CONFLICT (username) DO NOTHING;
 
