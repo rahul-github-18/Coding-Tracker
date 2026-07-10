@@ -267,7 +267,7 @@ function ShareCodeContent({ isLoggedIn }) {
 
             <div className="form-group" style={{ margin: 0 }}>
               <label className={labelClassName} style={{ fontWeight: '600', marginBottom: '8px' }}>Paste Code</label>
-              <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #1e293b' }}>
+              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '8px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #1e293b' }}>
                 <Editor
                   height="100%"
                   language={snippetLanguage}
@@ -372,7 +372,7 @@ function ShareCodeContent({ isLoggedIn }) {
                 </button>
               </div>
               
-              <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #1e293b' }}>
+              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '8px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #1e293b' }}>
                 <Editor
                   height="100%"
                   language={retrievedSnippet.language}
