@@ -1332,6 +1332,26 @@ function DashboardContent({ searchQuery }) {
                           </button>
                         </>
                       )}
+                      {user?.role !== 'admin' && (
+                        <button
+                          className="btn"
+                          onClick={() => handleToggleTopicSelection(activeGroup.id)}
+                          style={{
+                            padding: '6px 14px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            backgroundColor: userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) 
+                              ? '#e6f4ea' 
+                              : 'var(--btn-secondary-bg)',
+                            color: userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id)
+                              ? '#137333'
+                              : 'var(--text-color)',
+                            border: '1px solid ' + (userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) ? '#ceead6' : 'var(--card-border)')
+                          }}
+                        >
+                          {userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) ? '✓ Selected' : '+ Select Topic'}
+                        </button>
+                      )}
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -1590,63 +1610,84 @@ function DashboardContent({ searchQuery }) {
           {/* Curriculum Explore Grid */}
           <div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
-              Explore Curriculum Topics
+              {user?.role === 'admin' ? 'Explore Curriculum Topics' : 'Selected Curriculum Topics'}
             </h3>
-            <div className="todos-grid">
-              {filteredTopics.map((topic) => {
-                const topicQs = allQuestions.filter(q => q.todo_id === topic.id);
-                const completedQCount = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed')).length;
-                const progressPercent = topicQs.length > 0 ? Math.round((completedQCount / topicQs.length) * 100) : 0;
+            
+            {(() => {
+              const selectedTopicIds = new Set(
+                userTasks.filter(t => t.item_type === 'topic').map(t => t.item_id)
+              );
+              
+              const displayedTopics = topics.filter(topic => {
+                const matchesSearch = !searchQuery || 
+                  topic.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  topic.category.toLowerCase().includes(searchQuery.toLowerCase());
 
+                if (user?.role === 'admin') {
+                  return matchesSearch;
+                }
+                return selectedTopicIds.has(topic.id) && matchesSearch;
+              });
+
+              if (displayedTopics.length === 0) {
                 return (
-                  <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
-                          {topic.category}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Advanced' ? '#d93025' : topic.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
-                          {topic.difficulty}
-                        </span>
-                      </div>
-                      <h4 className="card-title" style={{ cursor: 'pointer' }} onClick={() => router.push(`/?filter=all&topicId=${topic.id}`)}>
-                        {topic.title}
-                      </h4>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '6px' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Est. Time: {topic.estimated_time}</span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
-                        <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '2px', overflow: 'hidden' }}>
-                          <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: '#137333' }}></div>
-                        </div>
-                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: 'var(--text-muted)' }}>{progressPercent}%</span>
-                      </div>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ 
-                          padding: '4px 8px', 
-                          fontSize: '0.75rem',
-                          backgroundColor: userTasks.some(t => t.item_type === 'topic' && t.item_id === topic.id) ? '#e8f0fe' : 'var(--btn-secondary-bg)',
-                          color: userTasks.some(t => t.item_type === 'topic' && t.item_id === topic.id) ? '#1a73e8' : 'var(--text-color)',
-                          border: '1px solid ' + (userTasks.some(t => t.item_type === 'topic' && t.item_id === topic.id) ? '#d2e3fc' : 'var(--card-border)')
-                        }} 
-                        onClick={() => handleToggleTopicSelection(topic.id)}
-                        disabled={!user.approved && user.role !== 'admin'}
-                      >
-                        {userTasks.some(t => t.item_type === 'topic' && t.item_id === topic.id) ? '✓ Selected' : '+ Select Topic'}
-                      </button>
-                      <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/?filter=all&topicId=${topic.id}`)}>
-                        Study Topic &rarr;
-                      </button>
-                    </div>
+                  <div style={{ padding: '40px 24px', textAlign: 'center', border: '1.5px dashed var(--card-border)', borderRadius: '8px', color: 'var(--text-muted)' }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600' }}>
+                      {user?.role === 'admin' ? 'No topics match your search.' : 'You have not selected any topics yet.'}
+                    </p>
+                    {user?.role !== 'admin' && (
+                      <p style={{ margin: '6px 0 0 0', fontSize: '0.85rem' }}>
+                        Go to the <strong style={{ color: 'var(--link-color)', cursor: 'pointer' }} onClick={() => router.push('/?filter=all')}>Curriculum</strong> tab in the sidebar to browse and select topics for your dashboard.
+                      </p>
+                    )}
                   </div>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div className="todos-grid">
+                  {displayedTopics.map((topic) => {
+                    const topicQs = allQuestions.filter(q => q.todo_id === topic.id);
+                    const completedQCount = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed')).length;
+                    const progressPercent = topicQs.length > 0 ? Math.round((completedQCount / topicQs.length) * 100) : 0;
+
+                    return (
+                      <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                              {topic.category}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Advanced' ? '#d93025' : topic.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                              {topic.difficulty}
+                            </span>
+                          </div>
+                          <h4 className="card-title" style={{ cursor: 'pointer' }} onClick={() => router.push(`/?filter=all&topicId=${topic.id}`)}>
+                            {topic.title}
+                          </h4>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '6px' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Est. Time: {topic.estimated_time}</span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
+                            <div style={{ flex: 1, height: '4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '2px', overflow: 'hidden' }}>
+                              <div style={{ width: `${progressPercent}%`, height: '100%', backgroundColor: '#137333' }}></div>
+                            </div>
+                            <span style={{ fontSize: '0.7rem', fontWeight: '600', color: 'var(--text-muted)' }}>{progressPercent}%</span>
+                          </div>
+                        </div>
+
+                        <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/?filter=all&topicId=${topic.id}`)}>
+                            Study Topic &rarr;
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
