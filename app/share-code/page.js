@@ -41,6 +41,7 @@ function ExpiryCountdown({ createdAtStr }) {
 
 function ShareCodeContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [activeTab, setActiveTab] = useState('share'); // 'share' or 'get'
   const [newCode, setNewCode] = useState('');
   const [snippetLanguage, setSnippetLanguage] = useState('javascript');
   const [saving, setSaving] = useState(false);
@@ -67,6 +68,7 @@ function ShareCodeContent() {
   useEffect(() => {
     if (codeParam && codeParam.length === 4) {
       setRetrievalKey(codeParam);
+      setActiveTab('get');
       handleRetrieveCode(codeParam);
     }
   }, [codeParam]);
@@ -146,166 +148,220 @@ function ShareCodeContent() {
   };
 
   const innerUI = (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr lg:1fr', gap: '32px', alignItems: 'start' }} className="flex flex-col lg:grid">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Left Pane: Create Share */}
-      <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>Share a Snippet</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Paste your code below to get a temporary 4-digit code.</p>
-        </div>
-
-        {error && <div className="login-error" style={{ margin: 0 }}>{error}</div>}
-
-        <form onSubmit={handleShare} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" style={{ fontWeight: '600', marginBottom: '6px' }}>Language</label>
-            <select 
-              value={snippetLanguage} 
-              onChange={(e) => setSnippetLanguage(e.target.value)} 
-              className="form-input"
-              style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: 'var(--list-item-bg)', color: 'var(--text-color)', border: '1px solid var(--card-border)' }}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
-              <option value="python">Python</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="sql">SQL</option>
-              <option value="plaintext">Plain Text</option>
-            </select>
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px' }}>Paste Code</label>
-            <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--card-border)' }}>
-              <Editor
-                height="100%"
-                language={snippetLanguage}
-                theme="vs-dark"
-                value={newCode}
-                onChange={(val) => setNewCode(val || '')}
-                options={{
-                  selectOnLineNumbers: true,
-                  lineNumbers: 'on',
-                  wordWrap: 'on',
-                  autoClosingBrackets: 'always',
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  automaticLayout: true
-                }}
-              />
-            </div>
-          </div>
-
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
-            disabled={saving || !newCode.trim()}
-            style={{ padding: '10px 16px', fontWeight: '600', width: '100%', display: 'flex', justifyContent: 'center' }}
-          >
-            {saving ? 'Generating key...' : '⚡ Share & Generate 4-Digit Code'}
-          </button>
-        </form>
-
-        {generatedShareCode && (
-          <div style={{ marginTop: '12px', padding: '16px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>YOUR 4-DIGIT SHARE CODE</span>
-            <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#38bdf8', letterSpacing: '6px' }}>{generatedShareCode}</span>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Shared code automatically expires in 15 minutes.</p>
-            <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
-              <button 
-                className="btn btn-secondary" 
-                style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }}
-                onClick={() => copyToClipboard(generatedShareCode, 'Share key copied!')}
-              >
-                Copy Code
-              </button>
-              <button 
-                className="btn btn-primary" 
-                style={{ flex: 2, padding: '6px 10px', fontSize: '0.75rem' }}
-                onClick={() => {
-                  const link = `${window.location.origin}/share-code?code=${generatedShareCode}`;
-                  copyToClipboard(link, 'Direct sharing link copied!');
-                }}
-              >
-                Copy Link
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Tab Navigation buttons */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', margin: '0 auto 16px auto', maxWidth: '360px', width: '100%' }}>
+        <button 
+          onClick={() => {
+            setActiveTab('share');
+            setError('');
+          }}
+          style={{
+            flex: 1,
+            padding: '8px 16px',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            borderRadius: '20px',
+            border: activeTab === 'share' ? '1px solid var(--link-color)' : '1px solid var(--card-border)',
+            backgroundColor: activeTab === 'share' ? 'rgba(26, 115, 232, 0.12)' : 'var(--list-item-bg)',
+            color: activeTab === 'share' ? 'var(--link-color)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>📤</span> Share Code
+        </button>
+        <button 
+          onClick={() => {
+            setActiveTab('get');
+            setRetrievalError('');
+          }}
+          style={{
+            flex: 1,
+            padding: '8px 16px',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            borderRadius: '20px',
+            border: activeTab === 'get' ? '1px solid var(--link-color)' : '1px solid var(--card-border)',
+            backgroundColor: activeTab === 'get' ? 'rgba(26, 115, 232, 0.12)' : 'var(--list-item-bg)',
+            color: activeTab === 'get' ? 'var(--link-color)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px'
+          }}
+        >
+          <span>📥</span> Get Code
+        </button>
       </div>
 
-      {/* Right Pane: Retrieve Share */}
-      <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>Retrieve Shared Code</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Enter a 4-digit code to instantly access a shared snippet.</p>
-        </div>
+      {/* Conditionally Render Share / Get Card */}
+      {activeTab === 'share' ? (
+        /* Share Snippet Card */
+        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>Share a Snippet</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Paste your code below to get a temporary 4-digit code.</p>
+          </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            placeholder="E.g., 5819"
-            maxLength={4}
-            className="form-input"
-            value={retrievalKey}
-            onChange={(e) => setRetrievalKey(e.target.value.replace(/\D/g, ''))}
-            style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '4px', textAlign: 'center', height: '48px', padding: '0 12px', flex: 1 }}
-          />
-          <button 
-            className="btn btn-primary"
-            onClick={() => handleRetrieveCode()}
-            disabled={retrievalLoading || retrievalKey.length !== 4}
-            style={{ height: '48px', padding: '0 20px', fontWeight: '600' }}
-          >
-            {retrievalLoading ? 'Fetching...' : 'Retrieve'}
-          </button>
-        </div>
+          {error && <div className="login-error" style={{ margin: 0 }}>{error}</div>}
 
-        {retrievalError && <div className="login-error" style={{ margin: 0 }}>{retrievalError}</div>}
+          <form onSubmit={handleShare} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontWeight: '600', marginBottom: '6px' }}>Language</label>
+              <select 
+                value={snippetLanguage} 
+                onChange={(e) => setSnippetLanguage(e.target.value)} 
+                className="form-input"
+                style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: 'var(--list-item-bg)', color: 'var(--text-color)', border: '1px solid var(--card-border)' }}
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="sql">SQL</option>
+                <option value="plaintext">Plain Text</option>
+              </select>
+            </div>
 
-        {retrievedSnippet && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--list-item-bg)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '8px' }}>
-                  {retrievedSnippet.language}
-                </span>
-                <ExpiryCountdown createdAtStr={retrievedSnippet.created_at} />
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label" style={{ fontWeight: '600', marginBottom: '8px' }}>Paste Code</label>
+              <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--card-border)' }}>
+                <Editor
+                  height="100%"
+                  language={snippetLanguage}
+                  theme="vs-dark"
+                  value={newCode}
+                  onChange={(val) => setNewCode(val || '')}
+                  options={{
+                    selectOnLineNumbers: true,
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    autoClosingBrackets: 'always',
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    automaticLayout: true
+                  }}
+                />
               </div>
-              <button 
-                className="btn btn-secondary" 
-                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                onClick={() => copyToClipboard(retrievedSnippet.code, 'Code snippet copied to clipboard!')}
-              >
-                Copy Code
-              </button>
             </div>
-            
-            <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--card-border)' }}>
-              <Editor
-                height="100%"
-                language={retrievedSnippet.language}
-                theme="vs-dark"
-                value={retrievedSnippet.code}
-                options={{
-                  readOnly: true,
-                  selectOnLineNumbers: true,
-                  lineNumbers: 'on',
-                  wordWrap: 'on',
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  automaticLayout: true
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
 
+            <button 
+              type="submit" 
+              className="btn btn-primary" 
+              disabled={saving || !newCode.trim()}
+              style={{ padding: '10px 16px', fontWeight: '600', width: '100%', display: 'flex', justifyContent: 'center' }}
+            >
+              {saving ? 'Generating key...' : '⚡ Share & Generate 4-Digit Code'}
+            </button>
+          </form>
+
+          {generatedShareCode && (
+            <div style={{ marginTop: '12px', padding: '16px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>YOUR 4-DIGIT SHARE CODE</span>
+              <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#38bdf8', letterSpacing: '6px' }}>{generatedShareCode}</span>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Shared code automatically expires in 15 minutes.</p>
+              <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }}
+                  onClick={() => copyToClipboard(generatedShareCode, 'Share key copied!')}
+                >
+                  Copy Code
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ flex: 2, padding: '6px 10px', fontSize: '0.75rem' }}
+                  onClick={() => {
+                    const link = `${window.location.origin}/share-code?code=${generatedShareCode}`;
+                    copyToClipboard(link, 'Direct sharing link copied!');
+                  }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Retrieve Code Card */
+        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>Retrieve Shared Code</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Enter a 4-digit code to instantly access a shared snippet.</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="E.g., 5819"
+              maxLength={4}
+              className="form-input"
+              value={retrievalKey}
+              onChange={(e) => setRetrievalKey(e.target.value.replace(/\D/g, ''))}
+              style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '4px', textAlign: 'center', height: '48px', padding: '0 12px', flex: 1 }}
+            />
+            <button 
+              className="btn btn-primary"
+              onClick={() => handleRetrieveCode()}
+              disabled={retrievalLoading || retrievalKey.length !== 4}
+              style={{ height: '48px', padding: '0 20px', fontWeight: '600' }}
+            >
+              {retrievalLoading ? 'Fetching...' : 'Retrieve'}
+            </button>
+          </div>
+
+          {retrievalError && <div className="login-error" style={{ margin: 0 }}>{retrievalError}</div>}
+
+          {retrievedSnippet && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--list-item-bg)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: '8px' }}>
+                    {retrievedSnippet.language}
+                  </span>
+                  <ExpiryCountdown createdAtStr={retrievedSnippet.created_at} />
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  onClick={() => copyToClipboard(retrievedSnippet.code, 'Code snippet copied to clipboard!')}
+                >
+                  Copy Code
+                </button>
+              </div>
+              
+              <div className="monaco-wrapper" style={{ height: '280px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--card-border)' }}>
+                <Editor
+                  height="100%"
+                  language={retrievedSnippet.language}
+                  theme="vs-dark"
+                  value={retrievedSnippet.code}
+                  options={{
+                    readOnly: true,
+                    selectOnLineNumbers: true,
+                    lineNumbers: 'on',
+                    wordWrap: 'on',
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    automaticLayout: true
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
