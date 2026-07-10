@@ -121,7 +121,14 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
       <div className="main-content">
         <header className="header">
           <div className="header-left">
-            <h1 className="header-title" style={{ fontSize: '1.5rem' }}>CodeDiary</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img 
+                src="/logo.png" 
+                alt="CodeDiary Logo" 
+                style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '6px' }} 
+              />
+              <h1 className="header-title" style={{ fontSize: '1.5rem', margin: 0 }}>CodeDiary</h1>
+            </div>
             <div className="header-date">{getFormattedDate()}</div>
           </div>
           <div className="header-right">

@@ -37,7 +37,14 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme }) => {
 
   return (
     <div className="sidebar">
-      <div className="sidebar-title">CodeDiary</div>
+      <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '16px 20px', textDecoration: 'none' }}>
+        <img 
+          src="/logo.png" 
+          alt="CodeDiary Logo" 
+          style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px' }} 
+        />
+        <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)' }}>CodeDiary</span>
+      </div>
       <ul className="sidebar-menu">
         <li>
           <div
