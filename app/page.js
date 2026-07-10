@@ -37,7 +37,7 @@ function DashboardContent({ searchQuery }) {
 
   // Forms / Modals States
   const [activeForm, setActiveForm] = useState(null); // 'topic'
-  const [newTopic, setNewTopic] = useState({ title: '', category: 'General', difficulty: 'Beginner', estimatedTime: '1 hour' });
+  const [newTopic, setNewTopic] = useState({ title: '', category: 'General', difficulty: 'Easy', estimatedTime: '1 hour' });
   const [editingTopic, setEditingTopic] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [expandedQuestionId, setExpandedQuestionId] = useState(null);
@@ -47,7 +47,7 @@ function DashboardContent({ searchQuery }) {
   const [dashboardFilter, setDashboardFilter] = useState('all');
   const [newQuestionForm, setNewQuestionForm] = useState({
     title: '',
-    difficulty: 'Beginner',
+    difficulty: 'Easy',
     tags: '',
     description: '',
     code: '',
@@ -162,7 +162,7 @@ function DashboardContent({ searchQuery }) {
         newTopic.estimatedTime
       );
       setSuccess('Topic created successfully!');
-      setNewTopic({ title: '', category: 'General', difficulty: 'Beginner', estimatedTime: '1 hour' });
+      setNewTopic({ title: '', category: 'General', difficulty: 'Easy', estimatedTime: '1 hour' });
       setActiveForm(null);
       loadDashboardData(user);
     } catch (err) {
@@ -196,7 +196,9 @@ function DashboardContent({ searchQuery }) {
     try {
       await todoService.deleteTodo(topicId);
       setSuccess('Topic deleted successfully!');
-      setSelectedTopicId(null);
+      if (selectedTopicId === topicId) {
+        setSelectedTopicId(null);
+      }
       loadDashboardData(user);
     } catch (err) {
       setError('Failed to delete topic.');
@@ -212,7 +214,7 @@ function DashboardContent({ searchQuery }) {
       setSuccess('Question added successfully!');
       setNewQuestionForm({
         title: '',
-        difficulty: 'Beginner',
+        difficulty: 'Easy',
         tags: '',
         description: '',
         code: '',
@@ -301,12 +303,12 @@ function DashboardContent({ searchQuery }) {
             const code = row[2] || '';
             
             // Normalize difficulty level in column 4 (index 3)
-            const rawDifficulty = String(row[3] || '').trim();
-            let difficulty = 'Beginner';
-            if (rawDifficulty.toLowerCase().includes('adv')) {
-              difficulty = 'Advanced';
-            } else if (rawDifficulty.toLowerCase().includes('int') || rawDifficulty.toLowerCase().includes('mid')) {
-              difficulty = 'Intermediate';
+            const rawDifficulty = String(row[3] || '').trim().toLowerCase();
+            let difficulty = 'Easy';
+            if (rawDifficulty.includes('hard') || rawDifficulty.includes('adv')) {
+              difficulty = 'Hard';
+            } else if (rawDifficulty.includes('medium') || rawDifficulty.includes('med') || rawDifficulty.includes('int') || rawDifficulty.includes('mid')) {
+              difficulty = 'Medium';
             }
 
             if (title && String(title).trim() !== '') {
@@ -387,7 +389,7 @@ function DashboardContent({ searchQuery }) {
       };
 
       addText(`CURRICULUM TOPIC: ${topic.title.toUpperCase()}`, 16, true, [26, 115, 232], 8);
-      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Beginner'} | Estimated Time: ${topic.estimated_time || '1 hour'}`, 10, false, [128, 128, 128], 10);
+      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Easy'} | Estimated Time: ${topic.estimated_time || '1 hour'}`, 10, false, [128, 128, 128], 10);
       
       doc.setDrawColor(200, 200, 200);
       doc.line(margin, yPos, pageWidth - margin, yPos);
@@ -397,7 +399,7 @@ function DashboardContent({ searchQuery }) {
 
       questionsForTopic.forEach((q, idx) => {
         addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
-        addText(`Difficulty: ${q.difficulty || 'Beginner'} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
+        addText(`Difficulty: ${q.difficulty || 'Easy'} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
 
         if (q.description) {
           addText(`Description:`, 9, true, [80, 80, 80], 2);
@@ -518,9 +520,9 @@ function DashboardContent({ searchQuery }) {
                     onChange={e => setNewTopic({ ...newTopic, difficulty: e.target.value })}
                     style={{ marginTop: '4px', width: '100%' }}
                   >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -577,9 +579,9 @@ function DashboardContent({ searchQuery }) {
                     onChange={e => setEditingTopic({ ...editingTopic, difficulty: e.target.value })}
                     style={{ marginTop: '4px', width: '100%' }}
                   >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -688,7 +690,7 @@ function DashboardContent({ searchQuery }) {
                     <span>• <strong>Column 1:</strong> Question Title (Required)</span>
                     <span>• <strong>Column 2:</strong> Explanation (Optional)</span>
                     <span>• <strong>Column 3:</strong> Code (Optional)</span>
-                    <span>• <strong>Column 4:</strong> Difficulty Level (Optional - e.g. Beginner, Intermediate, Advanced)</span>
+                    <span>• <strong>Column 4:</strong> Difficulty Level (Optional - e.g. Easy, Medium, Hard)</span>
                     <span style={{ fontSize: '0.75rem', fontStyle: 'italic', marginTop: '4px' }}>Note: Row 1 containing column headers will be automatically skipped.</span>
                   </div>
 
@@ -724,9 +726,9 @@ function DashboardContent({ searchQuery }) {
                         onChange={e => setNewQuestionForm({ ...newQuestionForm, difficulty: e.target.value })}
                         style={{ marginTop: '4px', width: '100%' }}
                       >
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
                       </select>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -808,9 +810,9 @@ function DashboardContent({ searchQuery }) {
                     onChange={e => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value })}
                     style={{ marginTop: '4px', width: '100%' }}
                   >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -1201,7 +1203,7 @@ function DashboardContent({ searchQuery }) {
                     <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
                       {topic.category}
                     </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Advanced' ? '#d93025' : topic.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Hard' ? '#d93025' : topic.difficulty === 'Medium' ? '#b06000' : '#137333' }}>
                       {topic.difficulty}
                     </span>
                   </div>
@@ -1263,7 +1265,7 @@ function DashboardContent({ searchQuery }) {
                   <button 
                     className="btn btn-primary" 
                     onClick={() => {
-                      setNewTopic({ title: '', category: 'General', difficulty: 'Beginner', estimatedTime: '1 hour' });
+                      setNewTopic({ title: '', category: 'General', difficulty: 'Easy', estimatedTime: '1 hour' });
                       setActiveForm('createTopic');
                     }}
                     style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
@@ -1351,7 +1353,7 @@ function DashboardContent({ searchQuery }) {
                         <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                           {activeGroup.category}
                         </span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: activeGroup.difficulty === 'Advanced' ? '#d93025' : activeGroup.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: activeGroup.difficulty === 'Hard' ? '#d93025' : activeGroup.difficulty === 'Medium' ? '#b06000' : '#137333' }}>
                           {activeGroup.difficulty}
                         </span>
                       </div>
@@ -1495,7 +1497,7 @@ function DashboardContent({ searchQuery }) {
                         onClick={() => {
                           setNewQuestionForm({
                             title: '',
-                            difficulty: 'Beginner',
+                            difficulty: 'Easy',
                             tags: '',
                             description: '',
                             code: '',
@@ -1539,9 +1541,9 @@ function DashboardContent({ searchQuery }) {
                                   borderRadius: '4px', 
                                   textTransform: 'uppercase', 
                                   fontWeight: '700',
-                                  backgroundColor: q.difficulty === 'Advanced' ? '#fde8e8' : q.difficulty === 'Intermediate' ? '#fef3c7' : '#e6f4ea',
-                                  color: q.difficulty === 'Advanced' ? '#d93025' : q.difficulty === 'Intermediate' ? '#b06000' : '#137333',
-                                  border: '1px solid ' + (q.difficulty === 'Advanced' ? '#f8b4b4' : q.difficulty === 'Intermediate' ? '#fcd34d' : '#ceead6')
+                                  backgroundColor: q.difficulty === 'Hard' ? '#fde8e8' : q.difficulty === 'Medium' ? '#fef3c7' : '#e6f4ea',
+                                  color: q.difficulty === 'Hard' ? '#d93025' : q.difficulty === 'Medium' ? '#b06000' : '#137333',
+                                  border: '1px solid ' + (q.difficulty === 'Hard' ? '#f8b4b4' : q.difficulty === 'Medium' ? '#fcd34d' : '#ceead6')
                                 }}>
                                   {q.difficulty}
                                 </span>
@@ -1885,7 +1887,7 @@ function DashboardContent({ searchQuery }) {
                             <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
                               {topic.category}
                             </span>
-                            <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Advanced' ? '#d93025' : topic.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '500', color: topic.difficulty === 'Hard' ? '#d93025' : topic.difficulty === 'Medium' ? '#b06000' : '#137333' }}>
                               {topic.difficulty}
                             </span>
                           </div>
