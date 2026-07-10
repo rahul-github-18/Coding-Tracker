@@ -42,6 +42,7 @@ function DashboardContent({ searchQuery }) {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [expandedQuestionId, setExpandedQuestionId] = useState(null);
   const [questionUploadMode, setQuestionUploadMode] = useState('manual');
+  const [questionFilter, setQuestionFilter] = useState('all');
   const [newQuestionForm, setNewQuestionForm] = useState({
     title: '',
     difficulty: 'Beginner',
@@ -953,7 +954,10 @@ function DashboardContent({ searchQuery }) {
 
   const computedStats = useMemo(() => {
     const selectedTopicIds = new Set(
-      userTasks.filter(t => t.item_type === 'topic').map(t => t.item_id)
+      userTasks
+        .filter(t => t.item_type === 'topic')
+        .map(t => t.item_id)
+        .filter(id => topics.some(topic => topic.id === id))
     );
 
     if (selectedTopicIds.size === 0) {
@@ -1293,6 +1297,21 @@ function DashboardContent({ searchQuery }) {
                 );
               }
 
+              const topicQs = activeGroup.questions || [];
+              const completedQs = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed'));
+              const pendingQs = topicQs.filter(q => !userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed'));
+
+              const displayedQuestions = (() => {
+                if (questionFilter === 'completed') return completedQs;
+                if (questionFilter === 'pending') return pendingQs;
+                return topicQs;
+              })();
+
+              const handleKPIFilterClick = (filterType) => {
+                setQuestionFilter(prev => prev === filterType ? 'all' : filterType);
+                setQuestionPage(0);
+              };
+
               return (
                 <div className="card" style={{ padding: '24px', minHeight: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--card-border)', paddingBottom: '16px', marginBottom: '20px' }}>
@@ -1374,9 +1393,68 @@ function DashboardContent({ searchQuery }) {
                     </div>
                   </div>
 
+                  {/* KPI Cards Row */}
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                    <div 
+                      onClick={() => handleKPIFilterClick('completed')}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '16px',
+                        borderRadius: '10px',
+                        border: `2px solid ${questionFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
+                        backgroundColor: questionFilter === 'completed' ? 'rgba(19, 115, 51, 0.08)' : 'var(--list-item-bg)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        boxShadow: 'var(--card-shadow)'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Completed Questions
+                      </span>
+                      <h3 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#137333', margin: 0 }}>
+                        {completedQs.length}
+                      </h3>
+                      <span style={{ fontSize: '0.7rem', color: '#137333', fontWeight: '600' }}>
+                        {questionFilter === 'completed' ? '● Filtering Active (Click to reset)' : 'Click to filter completed'}
+                      </span>
+                    </div>
+
+                    <div 
+                      onClick={() => handleKPIFilterClick('pending')}
+                      style={{
+                        flex: 1,
+                        minWidth: '150px',
+                        padding: '16px',
+                        borderRadius: '10px',
+                        border: `2px solid ${questionFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
+                        backgroundColor: questionFilter === 'pending' ? 'rgba(176, 96, 0, 0.08)' : 'var(--list-item-bg)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        boxShadow: 'var(--card-shadow)'
+                      }}
+                    >
+                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Pending Questions
+                      </span>
+                      <h3 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#b06000', margin: 0 }}>
+                        {pendingQs.length}
+                      </h3>
+                      <span style={{ fontSize: '0.7rem', color: '#b06000', fontWeight: '600' }}>
+                        {questionFilter === 'pending' ? '● Filtering Active (Click to reset)' : 'Click to filter pending'}
+                      </span>
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      Curriculum Questions
+                      Curriculum Questions {questionFilter !== 'all' && `(${questionFilter === 'completed' ? 'Completed' : 'Pending'})`}
                     </h4>
                     {user?.role === 'admin' && (
                       <button
@@ -1400,12 +1478,16 @@ function DashboardContent({ searchQuery }) {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {activeGroup.questions.length === 0 ? (
+                    {topicQs.length === 0 ? (
                       <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
                         No questions registered under this curriculum topic.
                       </div>
+                    ) : displayedQuestions.length === 0 ? (
+                      <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
+                        {questionFilter === 'completed' ? 'No completed questions found.' : 'All questions completed! No pending questions.'}
+                      </div>
                     ) : (
-                      activeGroup.questions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => {
+                      displayedQuestions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => {
                         const isExpanded = expandedQuestionId === q.id;
                         return (
                           <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -1547,7 +1629,7 @@ function DashboardContent({ searchQuery }) {
                     )}
                   </div>
 
-                  {activeGroup.questions.length > 10 && (
+                  {displayedQuestions.length > 10 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
                       <button 
                         className="btn btn-secondary" 
@@ -1558,12 +1640,12 @@ function DashboardContent({ searchQuery }) {
                         &larr; Previous 10
                       </button>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        Showing {questionPage * 10 + 1} - {Math.min((questionPage + 1) * 10, activeGroup.questions.length)} of {activeGroup.questions.length} Questions
+                        Showing {questionPage * 10 + 1} - {Math.min((questionPage + 1) * 10, displayedQuestions.length)} of {displayedQuestions.length} Questions
                       </span>
                       <button 
                         className="btn btn-secondary" 
-                        onClick={() => setQuestionPage(p => ((p + 1) * 10 < activeGroup.questions.length ? p + 1 : p))}
-                        disabled={(questionPage + 1) * 10 >= activeGroup.questions.length}
+                        onClick={() => setQuestionPage(p => ((p + 1) * 10 < displayedQuestions.length ? p + 1 : p))}
+                        disabled={(questionPage + 1) * 10 >= displayedQuestions.length}
                         style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                       >
                         Next 10 &rarr;
@@ -1662,7 +1744,7 @@ function DashboardContent({ searchQuery }) {
                               {topic.difficulty}
                             </span>
                           </div>
-                          <h4 className="card-title" style={{ cursor: 'pointer' }} onClick={() => router.push(`/?filter=all&topicId=${topic.id}`)}>
+                          <h4 style={{ margin: '0 0 6px 0', fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-heading)' }}>
                             {topic.title}
                           </h4>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '6px' }}>
