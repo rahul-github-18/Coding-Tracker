@@ -41,7 +41,7 @@ const Login = () => {
         localStorage.setItem('userId', user.id.toString());
         localStorage.setItem('userRole', user.role);
         localStorage.setItem('currentUser', JSON.stringify(user));
-        
+
         router.replace('/');
       }
     } catch (err) {
@@ -66,9 +66,9 @@ const Login = () => {
 
         {/* Card Header & Brand Branding */}
         <div className="flex flex-col items-center text-center mb-6">
-          <img 
-            src="/logo.png" 
-            alt="CodeDiary Logo" 
+          <img
+            src="/logo.png"
+            alt="CodeDiary Logo"
             className="h-12 w-12 rounded-xl object-contain shadow-lg shadow-sky-500/10 mb-4 bg-slate-950/40 p-1 border border-slate-800"
           />
           <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
@@ -83,9 +83,8 @@ const Login = () => {
         <div className="flex rounded-lg bg-slate-950/40 p-1 mb-6 border border-slate-800/60">
           <button
             type="button"
-            className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              !isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${!isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             onClick={() => {
               setIsRegisterMode(false);
               setError('');
@@ -96,9 +95,8 @@ const Login = () => {
           </button>
           <button
             type="button"
-            className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
             onClick={() => {
               setIsRegisterMode(true);
               setError('');
@@ -140,7 +138,7 @@ const Login = () => {
                 type="text"
                 id="username"
                 className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-4 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
-                placeholder={isRegisterMode ? "Choose a username" : "Enter username (e.g. admin or user)"}
+                placeholder={isRegisterMode ? "Choose a username" : "Enter username "}
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -163,7 +161,7 @@ const Login = () => {
                 type="password"
                 id="password"
                 className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-4 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
-                placeholder={isRegisterMode ? "Choose a password" : "Enter password (e.g. admin@123 or 1234)"}
+                placeholder={isRegisterMode ? "Choose a password" : "Enter password "}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
