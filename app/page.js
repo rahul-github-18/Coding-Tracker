@@ -250,41 +250,110 @@ function DashboardContent({ searchQuery }) {
     }
   };
 
-  const handleExportTopicMarkdown = (topic) => {
+  const handleExportTopicPDF = (topic) => {
     if (!topic) return;
     const questionsForTopic = allQuestions.filter(q => q.todo_id === topic.id);
-    
-    let content = `# Topic: ${topic.title}\n`;
-    content += `* **Category**: ${topic.category || 'General'}\n`;
-    content += `* **Difficulty**: ${topic.difficulty || 'Beginner'}\n`;
-    content += `* **Estimated Time**: ${topic.estimated_time || '1 hour'}\n\n`;
-    content += `---\n\n`;
-    content += `## Questions (${questionsForTopic.length})\n\n`;
-    
-    questionsForTopic.forEach((q, idx) => {
-      content += `### ${idx + 1}. ${q.title}\n`;
-      content += `* **Difficulty**: ${q.difficulty || 'Beginner'}\n`;
-      content += `* **Tags**: ${q.tags || 'None'}\n\n`;
-      if (q.description) {
-        content += `#### Description\n${q.description}\n\n`;
-      }
-      if (q.code) {
-        content += `#### Starter / Reference Code\n\`\`\`java\n${q.code}\n\`\`\`\n\n`;
-      }
-      if (q.explanation) {
-        content += `#### Explanation & Answer\n${q.explanation}\n\n`;
-      }
-      content += `---\n\n`;
+
+    import('jspdf').then(({ jsPDF }) => {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - 2 * margin;
+
+      let yPos = 20;
+
+      const addText = (text, fontSize = 10, isBold = false, color = [0, 0, 0], spacing = 5) => {
+        doc.setFontSize(fontSize);
+        doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+        doc.setTextColor(color[0], color[1], color[2]);
+
+        const lines = doc.splitTextToSize(text, contentWidth);
+        const requiredHeight = lines.length * (fontSize * 0.4) + spacing;
+        if (yPos + requiredHeight > pageHeight - margin) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        lines.forEach(line => {
+          doc.text(line, margin, yPos);
+          yPos += (fontSize * 0.4);
+        });
+
+        yPos += spacing;
+      };
+
+      addText(`CURRICULUM TOPIC: ${topic.title.toUpperCase()}`, 16, true, [26, 115, 232], 8);
+      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Beginner'} | Estimated Time: ${topic.estimated_time || '1 hour'}`, 10, false, [128, 128, 128], 10);
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+
+      addText(`Questions (${questionsForTopic.length})`, 13, true, [0, 0, 0], 8);
+
+      questionsForTopic.forEach((q, idx) => {
+        addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
+        addText(`Difficulty: ${q.difficulty || 'Beginner'} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
+
+        if (q.description) {
+          addText(`Description:`, 9, true, [80, 80, 80], 2);
+          addText(q.description, 9.5, false, [50, 50, 50], 4);
+        }
+
+        if (q.code) {
+          addText(`Starter / Reference Code:`, 9, true, [80, 80, 80], 2);
+          doc.setFontSize(8.5);
+          doc.setFont('courier', 'normal');
+          doc.setTextColor(50, 50, 50);
+          
+          const codeLines = doc.splitTextToSize(q.code, contentWidth - 6);
+          const boxHeight = codeLines.length * 3.8 + 6;
+
+          if (yPos + boxHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFillColor(245, 245, 245);
+          doc.rect(margin, yPos, contentWidth, boxHeight, 'F');
+          
+          let codeY = yPos + 4;
+          codeLines.forEach(line => {
+            doc.text(line, margin + 3, codeY);
+            codeY += 3.8;
+          });
+
+          yPos += boxHeight + 4;
+        }
+
+        if (q.explanation) {
+          addText(`Explanation & Answer:`, 9, true, [80, 80, 80], 2);
+          addText(q.explanation, 9.5, false, [50, 50, 50], 6);
+        }
+
+        if (idx < questionsForTopic.length - 1) {
+          if (yPos + 10 > pageHeight - margin) {
+            doc.addPage();
+            yPos = 20;
+          } else {
+            doc.setDrawColor(240, 240, 240);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
+          }
+        }
+      });
+
+      doc.save(`${topic.title.replace(/\s+/g, '_')}_Curriculum.pdf`);
+    }).catch(err => {
+      console.error("Failed to load jsPDF library:", err);
+      setError("Failed to generate PDF document.");
     });
-    
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${topic.title.replace(/\s+/g, '_')}_Curriculum.md`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const renderModal = () => {
@@ -1134,7 +1203,7 @@ function DashboardContent({ searchQuery }) {
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        onClick={() => handleExportTopicMarkdown(activeGroup)}
+                        onClick={() => handleExportTopicPDF(activeGroup)}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
