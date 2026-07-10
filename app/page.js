@@ -40,6 +40,7 @@ function DashboardContent({ searchQuery }) {
   const [newTopic, setNewTopic] = useState({ title: '', category: 'General', difficulty: 'Beginner', estimatedTime: '1 hour' });
   const [editingTopic, setEditingTopic] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [expandedQuestionId, setExpandedQuestionId] = useState(null);
   const [newQuestionForm, setNewQuestionForm] = useState({
     title: '',
     difficulty: 'Beginner',
@@ -697,8 +698,7 @@ function DashboardContent({ searchQuery }) {
       const topicQuestions = allQuestions.filter(q => q.todo_id === topic.id).map(q => {
         const qTask = statusMap[`question_${q.id}`] || {};
         return {
-          id: q.id,
-          title: q.title,
+          ...q,
           status: qTask.status || 'Pending',
           taskId: qTask.id || null
         };
@@ -1135,40 +1135,116 @@ function DashboardContent({ searchQuery }) {
                         No questions registered under this curriculum topic.
                       </div>
                     ) : (
-                      activeGroup.questions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => (
-                        <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, marginRight: '16px' }}>
-                            <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
-                              question
-                            </span>
-                            <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-heading)' }}>
-                              {q.title}
-                            </span>
-                          </div>
-                          
-                          {user?.role === 'admin' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <button
-                                className="btn btn-secondary"
-                                onClick={() => {
-                                  setEditingQuestion(q);
-                                  setActiveForm('editQuestion');
-                                }}
-                                style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
+                      activeGroup.questions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => {
+                        const isExpanded = expandedQuestionId === q.id;
+                        return (
+                          <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden' }}>
+                            {/* Main Question Header Row */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)' }}>
+                              <div 
+                                onClick={() => setExpandedQuestionId(isExpanded ? null : q.id)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, marginRight: '16px', cursor: 'pointer' }}
                               >
-                                Edit
-                              </button>
-                              <button
-                                className="btn btn-danger"
-                                onClick={() => handleDeleteQuestion(q.id)}
-                                style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
-                              >
-                                Delete
-                              </button>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '12px', textAlign: 'center' }}>
+                                  {isExpanded ? '▼' : '▶'}
+                                </span>
+                                <span style={{ fontSize: '0.65rem', padding: '2px 6px', backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '4px', textTransform: 'uppercase', fontWeight: '600', color: 'var(--text-muted)' }}>
+                                  question
+                                </span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-heading)' }}>
+                                  {q.title}
+                                </span>
+                              </div>
+                              
+                              {user?.role === 'admin' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <button
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                      setEditingQuestion(q);
+                                      setActiveForm('editQuestion');
+                                    }}
+                                    style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="btn btn-danger"
+                                    onClick={() => handleDeleteQuestion(q.id)}
+                                    style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ))
+
+                            {/* Collapsible Details Body */}
+                            {isExpanded && (
+                              <div style={{ 
+                                padding: '16px', 
+                                backgroundColor: 'var(--card-bg)', 
+                                borderTop: '1px solid var(--card-border)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px'
+                              }}>
+                                {/* Badges & Metadata */}
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: '600', color: q.difficulty === 'Advanced' ? '#d93025' : q.difficulty === 'Intermediate' ? '#b06000' : '#137333' }}>
+                                    {q.difficulty}
+                                  </span>
+                                  {q.tags && q.tags.split(',').map((tag, idx) => (
+                                    <span key={idx} style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+
+                                {/* Description */}
+                                {q.description && (
+                                  <div>
+                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Description</h5>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-color)', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
+                                      {q.description}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Code Template */}
+                                {q.code && (
+                                  <div>
+                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Starter / Reference Code</h5>
+                                    <pre style={{ 
+                                      margin: 0, 
+                                      padding: '12px', 
+                                      backgroundColor: '#1e1e1e', 
+                                      color: '#d4d4d4', 
+                                      borderRadius: '6px', 
+                                      fontFamily: 'monospace', 
+                                      fontSize: '0.8rem', 
+                                      overflowX: 'auto',
+                                      lineHeight: '1.4'
+                                    }}>
+                                      <code>{q.code}</code>
+                                    </pre>
+                                  </div>
+                                )}
+
+                                {/* Explanation */}
+                                {q.explanation && (
+                                  <div>
+                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Explanation & Answer</h5>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-color)', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
+                                      {q.explanation}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
 
