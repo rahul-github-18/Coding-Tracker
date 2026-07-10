@@ -1386,43 +1386,45 @@ function DashboardContent({ searchQuery }) {
                         </svg>
                         Export Topic
                       </button>
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600' }}
-                        onClick={() => router.push(`/todo/${activeGroup.id}`)}
-                      >
-                        Study Topic &rarr;
-                      </button>
+                      {user?.role === 'admin' && (
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600' }}
+                          onClick={() => router.push(`/todo/${activeGroup.id}`)}
+                        >
+                          Study Topic &rarr;
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   {/* KPI Cards Row */}
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
                     <div 
                       onClick={() => handleKPIFilterClick('completed')}
                       style={{
                         flex: 1,
-                        minWidth: '150px',
-                        padding: '16px',
-                        borderRadius: '10px',
-                        border: `2px solid ${questionFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
+                        minWidth: '130px',
+                        padding: '10px 14px',
+                        borderRadius: '6px',
+                        border: `1.5px solid ${questionFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
                         backgroundColor: questionFilter === 'completed' ? 'rgba(19, 115, 51, 0.08)' : 'var(--list-item-bg)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '6px',
+                        gap: '4px',
                         boxShadow: 'var(--card-shadow)'
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Completed Questions
                       </span>
-                      <h3 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#137333', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#137333', margin: 0 }}>
                         {completedQs.length}
                       </h3>
-                      <span style={{ fontSize: '0.7rem', color: '#137333', fontWeight: '600' }}>
-                        {questionFilter === 'completed' ? '● Filtering Active (Click to reset)' : 'Click to filter completed'}
+                      <span style={{ fontSize: '0.65rem', color: '#137333', fontWeight: '600' }}>
+                        {questionFilter === 'completed' ? '● Filtering Active (Reset)' : 'Filter completed'}
                       </span>
                     </div>
 
@@ -1430,27 +1432,27 @@ function DashboardContent({ searchQuery }) {
                       onClick={() => handleKPIFilterClick('pending')}
                       style={{
                         flex: 1,
-                        minWidth: '150px',
-                        padding: '16px',
-                        borderRadius: '10px',
-                        border: `2px solid ${questionFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
+                        minWidth: '130px',
+                        padding: '10px 14px',
+                        borderRadius: '6px',
+                        border: `1.5px solid ${questionFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
                         backgroundColor: questionFilter === 'pending' ? 'rgba(176, 96, 0, 0.08)' : 'var(--list-item-bg)',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '6px',
+                        gap: '4px',
                         boxShadow: 'var(--card-shadow)'
                       }}
                     >
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Pending Questions
                       </span>
-                      <h3 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#b06000', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#b06000', margin: 0 }}>
                         {pendingQs.length}
                       </h3>
-                      <span style={{ fontSize: '0.7rem', color: '#b06000', fontWeight: '600' }}>
-                        {questionFilter === 'pending' ? '● Filtering Active (Click to reset)' : 'Click to filter pending'}
+                      <span style={{ fontSize: '0.65rem', color: '#b06000', fontWeight: '600' }}>
+                        {questionFilter === 'pending' ? '● Filtering Active (Reset)' : 'Filter pending'}
                       </span>
                     </div>
                   </div>
@@ -1711,58 +1713,58 @@ function DashboardContent({ searchQuery }) {
                   <div 
                     onClick={() => setDashboardFilter(prev => prev === 'completed' ? 'all' : 'completed')}
                     style={{
-                      padding: '24px',
-                      borderRadius: '12px',
-                      border: `2px solid ${dashboardFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
+                      padding: '12px 18px',
+                      borderRadius: '8px',
+                      border: `1.5px solid ${dashboardFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
                       backgroundColor: dashboardFilter === 'completed' ? 'rgba(19, 115, 51, 0.08)' : 'var(--card-bg)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      minHeight: '150px',
+                      minHeight: '100px',
                       boxShadow: 'var(--card-shadow)'
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Completed Topics
                       </span>
-                      <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#137333', marginTop: '12px', marginBottom: '8px' }}>
+                      <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#137333', marginTop: '6px', marginBottom: '4px' }}>
                         {completedTopicsCount}
                       </h3>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#137333', fontWeight: '600' }}>
-                      {dashboardFilter === 'completed' ? '● Filtering Active (Click to reset)' : 'Click to filter completed topics'}
+                    <span style={{ fontSize: '0.65rem', color: '#137333', fontWeight: '600' }}>
+                      {dashboardFilter === 'completed' ? '● Filtering Active (Reset)' : 'Filter completed topics'}
                     </span>
                   </div>
 
                   <div 
                     onClick={() => setDashboardFilter(prev => prev === 'pending' ? 'all' : 'pending')}
                     style={{
-                      padding: '24px',
-                      borderRadius: '12px',
-                      border: `2px solid ${dashboardFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
+                      padding: '12px 18px',
+                      borderRadius: '8px',
+                      border: `1.5px solid ${dashboardFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
                       backgroundColor: dashboardFilter === 'pending' ? 'rgba(176, 96, 0, 0.08)' : 'var(--card-bg)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      minHeight: '150px',
+                      minHeight: '100px',
                       boxShadow: 'var(--card-shadow)'
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Pending Topics
                       </span>
-                      <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#b06000', marginTop: '12px', marginBottom: '8px' }}>
+                      <h3 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#b06000', marginTop: '6px', marginBottom: '4px' }}>
                         {pendingTopicsCount}
                       </h3>
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#b06000', fontWeight: '600' }}>
-                      {dashboardFilter === 'pending' ? '● Filtering Active (Click to reset)' : 'Click to filter pending topics'}
+                    <span style={{ fontSize: '0.65rem', color: '#b06000', fontWeight: '600' }}>
+                      {dashboardFilter === 'pending' ? '● Filtering Active (Reset)' : 'Filter pending topics'}
                     </span>
                   </div>
                 </>
