@@ -12,9 +12,7 @@ function ExpiryCountdown({ createdAtStr }) {
   useEffect(() => {
     const updateCountdown = () => {
       if (!createdAtStr) return;
-      // Handle date format compatibility
-      const cleanedDate = createdAtStr.replace(/-/g, '/');
-      const createdTime = new Date(cleanedDate).getTime();
+      const createdTime = new Date(createdAtStr).getTime();
       const expiryTime = createdTime + (15 * 60 * 1000); // 15 minutes
       const remainingMs = expiryTime - Date.now();
 

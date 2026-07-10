@@ -37,21 +37,7 @@ export async function GET(req) {
 
     if (error) throw error;
 
-    const formattedCodes = (sharedCodes || []).map(item => {
-      const d = new Date(item.created_at);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const hh = String(d.getHours()).padStart(2, '0');
-      const min = String(d.getMinutes()).padStart(2, '0');
-      const ss = String(d.getSeconds()).padStart(2, '0');
-      return {
-        ...item,
-        created_at: `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
-      };
-    });
-
-    return NextResponse.json(formattedCodes);
+    return NextResponse.json(sharedCodes);
   } catch (error) {
     console.error('GET shared codes error:', error);
     return NextResponse.json({ message: 'Failed to retrieve shared codes.' }, { status: 500 });
@@ -83,20 +69,7 @@ export async function POST(req) {
 
     if (insertError) throw insertError;
 
-    const d = new Date(newSnippet.created_at);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    const ss = String(d.getSeconds()).padStart(2, '0');
-
-    const formattedSnippet = {
-      ...newSnippet,
-      created_at: `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
-    };
-
-    return NextResponse.json(formattedSnippet, { status: 201 });
+    return NextResponse.json(newSnippet, { status: 201 });
   } catch (error) {
     console.error('POST shared code error:', error);
     return NextResponse.json({ message: 'Failed to share code snippet.' }, { status: 500 });
