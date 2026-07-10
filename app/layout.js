@@ -6,8 +6,8 @@ export const metadata = {
   description: 'Organize your daily coding journey, save programming questions, write notes, format code snippets, and export summaries as PDF documents.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
   appleWebApp: {
     capable: true,
