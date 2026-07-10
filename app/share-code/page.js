@@ -39,8 +39,7 @@ function ExpiryCountdown({ createdAtStr }) {
   );
 }
 
-function ShareCodeContent() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+function ShareCodeContent({ isLoggedIn }) {
   const [activeTab, setActiveTab] = useState('share'); // 'share' or 'get'
   const [newCode, setNewCode] = useState('');
   const [snippetLanguage, setSnippetLanguage] = useState('javascript');
@@ -59,10 +58,6 @@ function ShareCodeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const codeParam = searchParams.get('code');
-
-  useEffect(() => {
-    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
-  }, []);
 
   // Auto-retrieve if code query param is present
   useEffect(() => {
@@ -439,12 +434,31 @@ function ShareCodeContent() {
 
 export default function ShareCodePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>;
+  }
+
+  if (isLoggedIn) {
+    return (
+      <Suspense fallback={<div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>}>
+        <Layout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
+          <ShareCodeContent isLoggedIn={true} />
+        </Layout>
+      </Suspense>
+    );
+  }
 
   return (
     <Suspense fallback={<div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>}>
-      <Layout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-        <ShareCodeContent />
-      </Layout>
+      <ShareCodeContent isLoggedIn={false} />
     </Suspense>
   );
 }
