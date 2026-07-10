@@ -11,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -58,17 +59,6 @@ const Login = () => {
       <div className="absolute top-1/4 left-1/4 h-80 w-80 rounded-full bg-sky-500/10 blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-violet-500/10 blur-[100px] pointer-events-none" />
 
-      {/* Top Floating Navigation for Code Sharing */}
-      <div className="w-full max-w-[1000px] flex justify-end items-center z-20 py-2 px-4 mt-2">
-        <button
-          onClick={() => router.push('/share-code')}
-          className="btn btn-secondary text-xs px-4 py-2 bg-slate-900/60 backdrop-blur border border-slate-800/80 text-sky-400 hover:text-sky-300 transition duration-200 cursor-pointer rounded-lg font-bold shadow-lg"
-          style={{ cursor: 'pointer' }}
-        >
-          ⚡ Share Code (No Login)
-        </button>
-      </div>
-
       {/* Main Content Row */}
       <div className="flex-1 flex items-center justify-center w-full z-10">
         {/* Outer Row Container */}
@@ -76,6 +66,30 @@ const Login = () => {
           
           {/* Left Side: Welcome branding */}
           <div className="flex-1 flex flex-col justify-center text-left max-w-[500px]">
+            
+            {/* Integrated Share Code Button Card */}
+            <div className="flex items-center gap-2 mb-6">
+              <button
+                onClick={() => router.push('/share-code')}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-900/80 backdrop-blur-md text-left transition duration-200 hover:border-sky-500/40 hover:shadow-[0_0_20px_rgba(56,189,248,0.15)] group"
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="text-sky-400 bg-sky-500/10 p-2 rounded-lg group-hover:scale-105 transition-transform duration-200">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h6v6" />
+                    <path d="M10 14L21 3" />
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-white font-extrabold text-xs tracking-wider">Share Code</div>
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">No Login Required</div>
+                </div>
+                <span className="text-sky-300/40 text-xs ml-1 group-hover:text-sky-300 transition-colors duration-200">✦</span>
+              </button>
+              <span className="text-amber-300 text-sm animate-pulse ml-1">✦✦</span>
+            </div>
+
             <div className="flex items-center gap-3 mb-4">
               <img
                 src="/logo.png"
@@ -85,7 +99,7 @@ const Login = () => {
               <span className="text-sky-400 font-bold tracking-widest text-xs uppercase">Welcome to</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6">
-              Code Diary
+              Code <span className="bg-gradient-to-r from-sky-400 to-purple-400 bg-clip-text text-transparent">Diary</span>
             </h1>
             <p className="text-slate-300 text-base leading-relaxed mb-8">
               A premium LMS & productivity dashboard for developers. Structure your curriculum topics, build custom learning questions, save template solutions, and compile your notes in a clean workspace.
@@ -150,7 +164,7 @@ const Login = () => {
             <div className="flex rounded-lg bg-slate-950/40 p-1 mb-6 border border-slate-800/60">
               <button
                 type="button"
-                className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${!isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${!isRegisterMode ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/10' : 'text-slate-400 hover:text-slate-200'}`}
                 onClick={() => {
                   setIsRegisterMode(false);
                   setError('');
@@ -161,7 +175,7 @@ const Login = () => {
               </button>
               <button
                 type="button"
-                className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${isRegisterMode ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`flex-1 rounded-md py-2 text-xs font-semibold tracking-wide transition-all cursor-pointer ${isRegisterMode ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/10' : 'text-slate-400 hover:text-slate-200'}`}
                 onClick={() => {
                   setIsRegisterMode(true);
                   setError('');
@@ -198,55 +212,117 @@ const Login = () => {
                 <label className="text-xs font-semibold text-slate-400 tracking-wider uppercase" htmlFor="username">
                   Username
                 </label>
-                <input
-                  type="text"
-                  id="username"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-4 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
-                  placeholder={isRegisterMode ? "Choose a username" : "Enter username "}
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    setError('');
-                  }}
-                  disabled={loading}
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    id="username"
+                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-10 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
+                    placeholder={isRegisterMode ? "Choose a username" : "Enter username "}
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setError('');
+                    }}
+                    disabled={loading}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-400 tracking-wider uppercase" htmlFor="password">
                   Password
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-4 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
-                  placeholder={isRegisterMode ? "Choose a password" : "Enter password "}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    className="w-full rounded-lg border border-slate-800 bg-slate-950/60 py-3 pl-10 pr-10 text-slate-100 placeholder-slate-500 outline-none transition duration-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 focus:shadow-[0_0_15px_rgba(56,189,248,0.08)]"
+                    placeholder={isRegisterMode ? "Choose a password" : "Enter password "}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError('');
+                    }}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 focus:outline-none"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {showPassword ? (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between text-xs mt-1">
+                <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="rounded border-slate-800 bg-slate-950/60 text-sky-500 focus:ring-0 focus:ring-offset-0 h-4 w-4 transition duration-200"
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span>Remember me</span>
+                </label>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert('Password reset is managed by the administrator. Please contact Rahul Ranjan to reset your password.');
                   }}
-                  disabled={loading}
-                  required
-                />
+                  className="text-sky-500 hover:text-sky-400 font-semibold transition-colors duration-200"
+                >
+                  Forgot password?
+                </a>
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 py-3 font-semibold text-white transition duration-200 active:scale-[0.98] shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 py-3 font-semibold text-white transition duration-200 active:scale-[0.98] shadow-lg shadow-sky-500/10 hover:shadow-sky-500/20 flex items-center justify-center relative cursor-pointer group"
                 disabled={loading}
               >
                 {loading ? (
-                  <>
+                  <div className="flex items-center gap-2">
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     <span>{isRegisterMode ? 'Submitting request...' : 'Authorizing...'}</span>
-                  </>
+                  </div>
                 ) : (
-                  <span>{isRegisterMode ? 'Submit Enrollment' : 'Sign In'}</span>
+                  <>
+                    <span>{isRegisterMode ? 'Submit Enrollment' : 'Sign In'}</span>
+                    <div className="absolute right-4 bg-white/20 p-1.5 rounded-full group-hover:translate-x-1 transition-transform duration-200">
+                      <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </div>
+                  </>
                 )}
               </button>
             </form>
