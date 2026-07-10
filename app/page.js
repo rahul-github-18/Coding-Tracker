@@ -20,6 +20,7 @@ function DashboardContent({ searchQuery }) {
   const [allQuestions, setAllQuestions] = useState([]);
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [questionPage, setQuestionPage] = useState(0);
+  const [topicPage, setTopicPage] = useState(0);
   const [usersList, setUsersList] = useState([]);
   const [userTasks, setUserTasks] = useState([]);
   const [userStats, setUserStats] = useState({
@@ -1348,11 +1349,10 @@ function DashboardContent({ searchQuery }) {
 
       {filter === 'all' ? (
           /* Curriculum Management Split View (Master-Detail) */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
-            
-            {/* Left Side: Topic Navigation Menu (Master Panel) */}
-            <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'stretch' }}>
+             {/* Left Side: Topic Navigation Menu (Master Panel) */}
+            <div className="card" style={{ padding: '20px', height: '700px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
                   Curriculum Topics
                 </h3>
@@ -1369,11 +1369,11 @@ function DashboardContent({ searchQuery }) {
                   </button>
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
                 {groupedTasks.length === 0 ? (
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No topics match search.</div>
                 ) : (
-                  groupedTasks.map((group) => {
+                  groupedTasks.slice(topicPage * 8, (topicPage + 1) * 8).map((group) => {
                     const isActive = selectedTopicId === group.id;
                     const qTotal = group.questions.length;
 
@@ -1412,6 +1412,31 @@ function DashboardContent({ searchQuery }) {
                   })
                 )}
               </div>
+              
+              {/* Topics Pagination Footer */}
+              {groupedTasks.length > 8 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '12px', flexShrink: 0 }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setTopicPage(p => Math.max(0, p - 1))}
+                    disabled={topicPage === 0}
+                    style={{ padding: '4px 8px', fontSize: '0.7rem' }}
+                  >
+                    &larr; Prev
+                  </button>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {topicPage * 8 + 1}-{Math.min((topicPage + 1) * 8, groupedTasks.length)} of {groupedTasks.length}
+                  </span>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setTopicPage(p => ((p + 1) * 8 < groupedTasks.length ? p + 1 : p))}
+                    disabled={(topicPage + 1) * 8 >= groupedTasks.length}
+                    style={{ padding: '4px 8px', fontSize: '0.7rem' }}
+                  >
+                    Next &rarr;
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Right Side: Questions & Details for Selected Topic (Detail Panel) */}
@@ -1441,7 +1466,7 @@ function DashboardContent({ searchQuery }) {
               };
 
               return (
-                <div className="card" style={{ padding: '24px', minHeight: 'auto' }}>
+                <div className="card" style={{ padding: '24px', height: '700px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--card-border)', paddingBottom: '16px', marginBottom: '20px' }}>
                     <div>
                       <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
@@ -1598,7 +1623,7 @@ function DashboardContent({ searchQuery }) {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
                     {topicQs.length === 0 ? (
                       <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
                         No questions registered under this curriculum topic.
@@ -1608,7 +1633,7 @@ function DashboardContent({ searchQuery }) {
                         {questionFilter === 'completed' ? 'No completed questions found.' : 'All questions completed! No pending questions.'}
                       </div>
                     ) : (
-                      displayedQuestions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => {
+                      displayedQuestions.slice(questionPage * 8, (questionPage + 1) * 8).map((q) => {
                         const isExpanded = expandedQuestionId === q.id;
                         return (
                           <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -1758,26 +1783,26 @@ function DashboardContent({ searchQuery }) {
                     )}
                   </div>
 
-                  {displayedQuestions.length > 10 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
+                  {displayedQuestions.length > 8 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px', flexShrink: 0 }}>
                       <button 
                         className="btn btn-secondary" 
                         onClick={() => setQuestionPage(p => Math.max(0, p - 1))}
                         disabled={questionPage === 0}
                         style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                       >
-                        &larr; Previous 10
+                        &larr; Previous 8
                       </button>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        Showing {questionPage * 10 + 1} - {Math.min((questionPage + 1) * 10, displayedQuestions.length)} of {displayedQuestions.length} Questions
+                        Showing {questionPage * 8 + 1} - {Math.min((questionPage + 1) * 8, displayedQuestions.length)} of {displayedQuestions.length} Questions
                       </span>
                       <button 
                         className="btn btn-secondary" 
-                        onClick={() => setQuestionPage(p => ((p + 1) * 10 < displayedQuestions.length ? p + 1 : p))}
-                        disabled={(questionPage + 1) * 10 >= displayedQuestions.length}
+                        onClick={() => setQuestionPage(p => ((p + 1) * 8 < displayedQuestions.length ? p + 1 : p))}
+                        disabled={(questionPage + 1) * 8 >= displayedQuestions.length}
                         style={{ padding: '6px 12px', fontSize: '0.8rem' }}
                       >
-                        Next 10 &rarr;
+                        Next 8 &rarr;
                       </button>
                     </div>
                   )}
