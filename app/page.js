@@ -42,6 +42,7 @@ function DashboardContent({ searchQuery }) {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [expandedQuestionId, setExpandedQuestionId] = useState(null);
   const [questionUploadMode, setQuestionUploadMode] = useState('manual');
+  const [selectedFileForUpload, setSelectedFileForUpload] = useState(null);
   const [questionFilter, setQuestionFilter] = useState('all');
   const [dashboardFilter, setDashboardFilter] = useState('all');
   const [newQuestionForm, setNewQuestionForm] = useState({
@@ -258,9 +259,20 @@ function DashboardContent({ searchQuery }) {
     }
   };
 
-  const handleExcelUpload = (e) => {
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      setSelectedFileForUpload(file);
+      setError('');
+      setSuccess('');
+    }
+  };
+
+  const handleExcelUpload = () => {
+    if (!selectedFileForUpload) {
+      setError('Please select an Excel or CSV file first.');
+      return;
+    }
 
     setError('');
     setSuccess('');
@@ -287,11 +299,20 @@ function DashboardContent({ searchQuery }) {
             const title = row[0];
             const explanation = row[1] || '';
             const code = row[2] || '';
+            
+            // Normalize difficulty level in column 4 (index 3)
+            const rawDifficulty = String(row[3] || '').trim();
+            let difficulty = 'Beginner';
+            if (rawDifficulty.toLowerCase().includes('adv')) {
+              difficulty = 'Advanced';
+            } else if (rawDifficulty.toLowerCase().includes('int') || rawDifficulty.toLowerCase().includes('mid')) {
+              difficulty = 'Intermediate';
+            }
 
             if (title && String(title).trim() !== '') {
               questionsToInsert.push({
                 title: String(title).trim(),
-                difficulty: 'Beginner',
+                difficulty: difficulty,
                 tags: '',
                 description: '',
                 code: String(code),
@@ -305,21 +326,22 @@ function DashboardContent({ searchQuery }) {
             return;
           }
 
-          setSuccess(`Auto-importing ${questionsToInsert.length} questions... Please wait.`);
+          setSuccess(`Importing ${questionsToInsert.length} questions... Please wait.`);
           
           for (const q of questionsToInsert) {
             await questionService.createQuestion(selectedTopicId, q);
           }
 
           setSuccess(`Successfully imported ${questionsToInsert.length} questions!`);
+          setSelectedFileForUpload(null);
           setActiveForm(null);
           loadDashboardData(user);
         } catch (err) {
           console.error(err);
-          setError('Failed to parse Excel sheet. Ensure layout has Question, Explanation, and Code columns.');
+          setError('Failed to parse Excel sheet. Ensure layout has Question, Explanation, Code, and Difficulty columns.');
         }
       };
-      reader.readAsArrayBuffer(file);
+      reader.readAsArrayBuffer(selectedFileForUpload);
     }).catch(err => {
       console.error(err);
       setError('Could not load Excel parser dependency.');
@@ -632,21 +654,21 @@ function DashboardContent({ searchQuery }) {
                     transition: 'border-color 0.2s ease',
                     position: 'relative'
                   }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px', color: 'var(--text-muted)' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px', color: selectedFileForUpload ? 'var(--link-color)' : 'var(--text-muted)' }}>
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                       <polyline points="17 8 12 3 7 8"></polyline>
                       <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
                     <p style={{ margin: '0 0 6px 0', fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-heading)' }}>
-                      Drag & drop your Excel or CSV file here, or click to browse
+                      {selectedFileForUpload ? selectedFileForUpload.name : 'Drag & drop your Excel or CSV file here, or click to browse'}
                     </p>
                     <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Supports .xlsx, .xls, and .csv files
+                      {selectedFileForUpload ? `${(selectedFileForUpload.size / 1024).toFixed(1)} KB` : 'Supports .xlsx, .xls, and .csv files'}
                     </p>
                     <input 
                       type="file" 
                       accept=".xlsx, .xls, .csv" 
-                      onChange={handleExcelUpload} 
+                      onChange={handleFileSelect} 
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -664,13 +686,19 @@ function DashboardContent({ searchQuery }) {
                   <div style={{ padding: '14px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <span style={{ fontWeight: '700', color: 'var(--text-heading)', fontSize: '0.85rem' }}>Excel Columns Layout Requirement:</span>
                     <span>• <strong>Column 1:</strong> Question Title (Required)</span>
-                    <span>• <strong>Column 2:</strong> Explanation / Notes (Optional)</span>
-                    <span>• <strong>Column 3:</strong> Starter / Reference Code (Optional)</span>
+                    <span>• <strong>Column 2:</strong> Explanation (Optional)</span>
+                    <span>• <strong>Column 3:</strong> Code (Optional)</span>
+                    <span>• <strong>Column 4:</strong> Difficulty Level (Optional - e.g. Beginner, Intermediate, Advanced)</span>
                     <span style={{ fontSize: '0.75rem', fontStyle: 'italic', marginTop: '4px' }}>Note: Row 1 containing column headers will be automatically skipped.</span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                    <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => { setSelectedFileForUpload(null); setActiveForm(null); }}>Cancel</button>
+                    {selectedFileForUpload && (
+                      <button type="button" className="btn btn-primary" onClick={handleExcelUpload}>
+                        Upload
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
