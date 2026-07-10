@@ -408,15 +408,20 @@ function DashboardContent({ searchQuery }) {
 
       questionsForTopic.forEach((q, idx) => {
         addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
-        addText(`Difficulty: ${q.difficulty || 'Easy'} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
+        addText(`Difficulty: ${getDisplayDifficulty(q.difficulty)} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
 
         if (q.description) {
           addText(`Description:`, 9, true, [80, 80, 80], 2);
           addText(q.description, 9.5, false, [50, 50, 50], 4);
         }
 
+        if (q.explanation) {
+          addText(`Explanation:`, 9, true, [80, 80, 80], 2);
+          addText(q.explanation, 9.5, false, [50, 50, 50], 6);
+        }
+
         if (q.code) {
-          addText(`Starter / Reference Code:`, 9, true, [80, 80, 80], 2);
+          addText(`Code:`, 9, true, [80, 80, 80], 2);
           doc.setFontSize(8.5);
           doc.setFont('courier', 'normal');
           doc.setTextColor(50, 50, 50);
@@ -439,11 +444,6 @@ function DashboardContent({ searchQuery }) {
           });
 
           yPos += boxHeight + 4;
-        }
-
-        if (q.explanation) {
-          addText(`Explanation & Answer:`, 9, true, [80, 80, 80], 2);
-          addText(q.explanation, 9.5, false, [50, 50, 50], 6);
         }
 
         if (idx < questionsForTopic.length - 1) {
