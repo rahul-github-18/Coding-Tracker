@@ -117,3 +117,10 @@ CREATE TABLE IF NOT EXISTS shared_codes (
   code TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 8. Create Indexes for performance optimization
+CREATE INDEX IF NOT EXISTS idx_questions_todo_id ON questions(todo_id);
+CREATE INDEX IF NOT EXISTS idx_code_examples_topic_id ON code_examples(topic_id);
+CREATE INDEX IF NOT EXISTS idx_notes_topic_id ON notes(topic_id);
+CREATE INDEX IF NOT EXISTS idx_user_tasks_user_id ON user_tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_tasks_added_date ON user_tasks(added_date);

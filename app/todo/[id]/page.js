@@ -65,6 +65,14 @@ function TodoDetailContent() {
     }
   }, [topicId, router]);
 
+  useEffect(() => {
+    if (questions && questions.length > 0) {
+      questions.slice(questionPage * 10, (questionPage + 1) * 10).forEach(q => {
+        router.prefetch(`/question/${q.id}`);
+      });
+    }
+  }, [questions, questionPage, router]);
+
   const loadTopicData = async (u) => {
     setLoading(true);
     setError('');

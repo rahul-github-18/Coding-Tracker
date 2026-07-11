@@ -91,6 +91,14 @@ function DashboardContent({ searchQuery }) {
     setTopicPage(0);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (topics && topics.length > 0) {
+      topics.slice(topicPage * 8, (topicPage + 1) * 8).forEach(topic => {
+        router.prefetch(`/todo/${topic.id}`);
+      });
+    }
+  }, [topics, topicPage, router]);
+
   const loadDashboardData = async (u) => {
     setLoading(true);
     setError('');
