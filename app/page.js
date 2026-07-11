@@ -75,6 +75,8 @@ function DashboardContent({ searchQuery }) {
   const [replyingSubmission, setReplyingSubmission] = useState(null);
   const [submissionReplyText, setSubmissionReplyText] = useState('');
   const [submittingSubmissionReply, setSubmittingSubmissionReply] = useState(false);
+  const [replyError, setReplyError] = useState('');
+  const [submissionReplyError, setSubmissionReplyError] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -243,6 +245,7 @@ function DashboardContent({ searchQuery }) {
     e.preventDefault();
     if (!replyingQuery || !replyText.trim()) return;
     setSubmittingReply(true);
+    setReplyError('');
     try {
       await adminQueryService.submitReply(replyingQuery.id, replyText);
       setReplyingQuery(null);
@@ -251,6 +254,7 @@ function DashboardContent({ searchQuery }) {
       window.dispatchEvent(new Event('refresh-notifications'));
     } catch (err) {
       console.error('Reply submission error:', err);
+      setReplyError(err.message || 'Failed to submit reply.');
     } finally {
       setSubmittingReply(false);
     }
@@ -260,6 +264,7 @@ function DashboardContent({ searchQuery }) {
     e.preventDefault();
     if (!replyingSubmission || !submissionReplyText.trim()) return;
     setSubmittingSubmissionReply(true);
+    setSubmissionReplyError('');
     try {
       await adminSubmissionService.submitReply(replyingSubmission.id, submissionReplyText);
       setReplyingSubmission(null);
@@ -268,6 +273,7 @@ function DashboardContent({ searchQuery }) {
       window.dispatchEvent(new Event('refresh-notifications'));
     } catch (err) {
       console.error('Submission reply error:', err);
+      setSubmissionReplyError(err.message || 'Failed to submit response.');
     } finally {
       setSubmittingSubmissionReply(false);
     }
@@ -1574,6 +1580,7 @@ function DashboardContent({ searchQuery }) {
                         onClick={() => {
                           setReplyingQuery(q);
                           setReplyText(q.reply_text || '');
+                          setReplyError('');
                         }}
                         style={{ padding: '6px 16px', fontSize: '0.8rem', fontWeight: '600' }}
                       >
@@ -1714,6 +1721,9 @@ function DashboardContent({ searchQuery }) {
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
                 @{replyingSubmission.users?.username} &mdash; {replyingSubmission.question_title}
               </p>
+              {submissionReplyError && (
+                <div className="login-error" style={{ marginBottom: '12px' }}>{submissionReplyError}</div>
+              )}
               <form onSubmit={handleSubmissionReplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>Your Feedback</label>
@@ -2507,6 +2517,9 @@ function DashboardContent({ searchQuery }) {
             <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 16px 0' }}>
               Reply to Query QRY-#{replyingQuery.id}
             </h3>
+            {replyError && (
+              <div className="login-error" style={{ marginBottom: '12px' }}>{replyError}</div>
+            )}
             
             <div style={{ marginBottom: '16px' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>Student: @{replyingQuery.users?.username || 'unknown'}</span>

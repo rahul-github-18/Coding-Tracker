@@ -36,13 +36,24 @@ export async function PUT(req, { params }) {
         replied_at: new Date().toISOString(),
         is_read_by_user: false // trigger notification dot for student
       })
-      .eq('id', id)
+      .eq('id', parseInt(id, 10))
       .select('*, users(username)')
       .maybeSingle();
 
     if (error) throw error;
 
     if (!updatedQuery) {
+      const { data: checkQ } = await supabase
+        .from('user_queries')
+        .select('id')
+        .eq('id', parseInt(id, 10))
+        .maybeSingle();
+
+      if (checkQ) {
+        return NextResponse.json({ 
+          message: 'Could not submit reply. RLS policies on Supabase are active and blocking writes. Please run: ALTER TABLE user_queries DISABLE ROW LEVEL SECURITY; in your Supabase SQL editor.' 
+        }, { status: 400 });
+      }
       return NextResponse.json({ message: 'Query not found.' }, { status: 404 });
     }
 
