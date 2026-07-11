@@ -34,6 +34,7 @@ function TodoDetailContent() {
   const [activeForm, setActiveForm] = useState(null); // 'editTopic', 'createQuestion', 'editQuestion'
   const [editingTopic, setEditingTopic] = useState(null);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [questionFormTab, setQuestionFormTab] = useState('general'); // 'general' | 'code' | 'explanation'
   const [newQuestionForm, setNewQuestionForm] = useState({
     title: '',
     difficulty: 'Easy',
@@ -678,10 +679,10 @@ function TodoDetailContent() {
                     title: '',
                     difficulty: 'Easy',
                     tags: '',
-                    description: '',
                     code: '',
                     explanation: ''
                   });
+                  setQuestionFormTab('general');
                   setActiveForm('createQuestion');
                 }}
                 style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}
@@ -762,6 +763,7 @@ function TodoDetailContent() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEditingQuestion(q);
+                                setQuestionFormTab('general');
                                 setActiveForm('editQuestion');
                               }}
                               style={{ padding: '4px 8px', fontSize: '0.75rem' }}
@@ -795,14 +797,7 @@ function TodoDetailContent() {
                             ))}
                           </div>
                         )}
-                        {q.description && (
-                          <div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Description / Prompt</span>
-                            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--text-color)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                              {q.description}
-                            </p>
-                          </div>
-                        )}
+
                         {q.explanation && (
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -1044,77 +1039,106 @@ function TodoDetailContent() {
                   </div>
                 ) : (
                   <form onSubmit={handleCreateQuestionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. Write a SQL query to find..." 
-                        className="form-input" 
-                        value={newQuestionForm.title} 
-                        onChange={e => setNewQuestionForm({ ...newQuestionForm, title: e.target.value })} 
-                        required 
-                        style={{ marginTop: '4px', width: '100%' }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
-                        <select 
-                          className="form-input" 
-                          value={newQuestionForm.difficulty} 
-                          onChange={e => setNewQuestionForm({ ...newQuestionForm, difficulty: e.target.value })}
-                          style={{ marginTop: '4px', width: '100%' }}
+                    {/* Tabs */}
+                    <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid var(--card-border)', marginBottom: '8px', paddingBottom: '4px' }}>
+                      {['general', 'code', 'explanation'].map((tab) => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setQuestionFormTab(tab)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: '8px 4px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            color: questionFormTab === tab ? '#0070f3' : 'var(--text-muted)',
+                            borderBottom: questionFormTab === tab ? '2px solid #0070f3' : '2px solid transparent',
+                            cursor: 'pointer',
+                            textTransform: 'capitalize',
+                            transition: 'all 0.2s ease',
+                            marginBottom: '-6px'
+                          }}
                         >
-                          <option value="Easy">Easy</option>
-                          <option value="Medium">Medium</option>
-                          <option value="Hard">Hard</option>
-                        </select>
+                          {tab}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* General Tab */}
+                    {questionFormTab === 'general' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
+                          <input 
+                            type="text" 
+                            placeholder="e.g. Write a SQL query to find..." 
+                            className="form-input" 
+                            value={newQuestionForm.title} 
+                            onChange={e => setNewQuestionForm({ ...newQuestionForm, title: e.target.value })} 
+                            required 
+                            style={{ marginTop: '4px', width: '100%' }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
+                            <select 
+                              className="form-input" 
+                              value={newQuestionForm.difficulty} 
+                              onChange={e => setNewQuestionForm({ ...newQuestionForm, difficulty: e.target.value })}
+                              style={{ marginTop: '4px', width: '100%' }}
+                            >
+                              <option value="Easy">Easy</option>
+                              <option value="Medium">Medium</option>
+                              <option value="Hard">Hard</option>
+                            </select>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g. SQL, Window Functions" 
+                              className="form-input" 
+                              value={newQuestionForm.tags} 
+                              onChange={e => setNewQuestionForm({ ...newQuestionForm, tags: e.target.value })} 
+                              style={{ marginTop: '4px', width: '100%' }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. SQL, Window Functions" 
+                    )}
+
+                    {/* Code Tab */}
+                    {questionFormTab === 'code' && (
+                      <div>
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
+                        <textarea 
+                          placeholder="// Provide starter code or reference solution..." 
                           className="form-input" 
-                          value={newQuestionForm.tags} 
-                          onChange={e => setNewQuestionForm({ ...newQuestionForm, tags: e.target.value })} 
-                          style={{ marginTop: '4px', width: '100%' }}
+                          rows={6}
+                          value={newQuestionForm.code} 
+                          onChange={e => setNewQuestionForm({ ...newQuestionForm, code: e.target.value })} 
+                          style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
                         />
                       </div>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Description / Instructions</label>
-                      <textarea 
-                        placeholder="Problem details..." 
-                        className="form-input" 
-                        rows={3}
-                        value={newQuestionForm.description} 
-                        onChange={e => setNewQuestionForm({ ...newQuestionForm, description: e.target.value })} 
-                        style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
-                      <textarea 
-                        placeholder="// Provide starter code or reference solution..." 
-                        className="form-input" 
-                        rows={4}
-                        value={newQuestionForm.code} 
-                        onChange={e => setNewQuestionForm({ ...newQuestionForm, code: e.target.value })} 
-                        style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
-                      <textarea 
-                        placeholder="Solution steps or markdown explanation..." 
-                        className="form-input" 
-                        rows={3}
-                        value={newQuestionForm.explanation} 
-                        onChange={e => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })} 
-                        style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                      />
-                    </div>
+                    )}
+
+                    {/* Explanation Tab */}
+                    {questionFormTab === 'explanation' && (
+                      <div>
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
+                        <textarea 
+                          placeholder="Solution steps or markdown explanation..." 
+                          className="form-input" 
+                          rows={6}
+                          value={newQuestionForm.explanation} 
+                          onChange={e => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })} 
+                          style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
+                        />
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                       <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
                       <button type="submit" className="btn btn-primary">Create Question</button>
@@ -1129,72 +1153,103 @@ function TodoDetailContent() {
                 <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-heading)' }}>
                   Edit Question Details
                 </h3>
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    value={editingQuestion.title} 
-                    onChange={e => setEditingQuestion({ ...editingQuestion, title: e.target.value })} 
-                    required 
-                    style={{ marginTop: '4px', width: '100%' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
-                    <select 
-                      className="form-input" 
-                      value={editingQuestion.difficulty} 
-                      onChange={e => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value })}
-                      style={{ marginTop: '4px', width: '100%' }}
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid var(--card-border)', marginBottom: '8px', paddingBottom: '4px' }}>
+                  {['general', 'code', 'explanation'].map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setQuestionFormTab(tab)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '8px 4px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        color: questionFormTab === tab ? '#0070f3' : 'var(--text-muted)',
+                        borderBottom: questionFormTab === tab ? '2px solid #0070f3' : '2px solid transparent',
+                        cursor: 'pointer',
+                        textTransform: 'capitalize',
+                        transition: 'all 0.2s ease',
+                        marginBottom: '-6px'
+                      }}
                     >
-                      <option value="Easy">Easy</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Hard">Hard</option>
-                    </select>
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* General Tab */}
+                {questionFormTab === 'general' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Question Title</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        value={editingQuestion.title} 
+                        onChange={e => setEditingQuestion({ ...editingQuestion, title: e.target.value })} 
+                        required 
+                        style={{ marginTop: '4px', width: '100%' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Difficulty</label>
+                        <select 
+                          className="form-input" 
+                          value={editingQuestion.difficulty} 
+                          onChange={e => setEditingQuestion({ ...editingQuestion, difficulty: e.target.value })}
+                          style={{ marginTop: '4px', width: '100%' }}
+                        >
+                          <option value="Easy">Easy</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Hard">Hard</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          value={editingQuestion.tags} 
+                          onChange={e => setEditingQuestion({ ...editingQuestion, tags: e.target.value })} 
+                          style={{ marginTop: '4px', width: '100%' }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Tags</label>
-                    <input 
-                      type="text" 
+                )}
+
+                {/* Code Tab */}
+                {questionFormTab === 'code' && (
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
+                    <textarea 
                       className="form-input" 
-                      value={editingQuestion.tags} 
-                      onChange={e => setEditingQuestion({ ...editingQuestion, tags: e.target.value })} 
-                      style={{ marginTop: '4px', width: '100%' }}
+                      rows={6}
+                      value={editingQuestion.code} 
+                      onChange={e => setEditingQuestion({ ...editingQuestion, code: e.target.value })} 
+                      style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
                     />
                   </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Description / Instructions</label>
-                  <textarea 
-                    className="form-input" 
-                    rows={3}
-                    value={editingQuestion.description} 
-                    onChange={e => setEditingQuestion({ ...editingQuestion, description: e.target.value })} 
-                    style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Working Code Template</label>
-                  <textarea 
-                    className="form-input" 
-                    rows={4}
-                    value={editingQuestion.code} 
-                    onChange={e => setEditingQuestion({ ...editingQuestion, code: e.target.value })} 
-                    style={{ marginTop: '4px', fontFamily: 'monospace', resize: 'vertical', width: '100%' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
-                  <textarea 
-                    className="form-input" 
-                    rows={3}
-                    value={editingQuestion.explanation} 
-                    onChange={e => setEditingQuestion({ ...editingQuestion, explanation: e.target.value })} 
-                    style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
-                  />
-                </div>
+                )}
+
+                {/* Explanation Tab */}
+                {questionFormTab === 'explanation' && (
+                  <div>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)' }}>Explanation / Notes</label>
+                    <textarea 
+                      className="form-input" 
+                      rows={6}
+                      value={editingQuestion.explanation} 
+                      onChange={e => setEditingQuestion({ ...editingQuestion, explanation: e.target.value })} 
+                      style={{ marginTop: '4px', resize: 'vertical', width: '100%' }}
+                    />
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                   <button type="button" className="btn btn-secondary" onClick={() => setActiveForm(null)}>Cancel</button>
                   <button type="submit" className="btn btn-primary">Save Changes</button>
