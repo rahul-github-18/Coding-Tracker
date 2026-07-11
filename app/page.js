@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import { todoService, userService, taskService, questionService, userQueryService, adminQueryService } from '@/lib/api';
+import { todoService, userService, taskService, questionService, userQueryService, adminQueryService, adminSubmissionService } from '@/lib/api';
 
 const getDisplayDifficulty = (difficulty) => {
   if (!difficulty) return 'Easy';
@@ -61,12 +61,17 @@ function DashboardContent({ searchQuery }) {
   const [codeSuccess, setCodeSuccess] = useState('');
 
   // Admin Dashboard Query States
-  const [adminTab, setAdminTab] = useState('topics'); // 'topics' | 'queries'
+  const [adminTab, setAdminTab] = useState('topics'); // 'topics' | 'queries' | 'submissions'
   const [adminQueries, setAdminQueries] = useState([]);
   const [loadingAdminQueries, setLoadingAdminQueries] = useState(false);
   const [replyingQuery, setReplyingQuery] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
+
+  // Admin submissions states
+  const [adminSubmissions, setAdminSubmissions] = useState([]);
+  const [loadingAdminSubmissions, setLoadingAdminSubmissions] = useState(false);
+  const [expandedSubmission, setExpandedSubmission] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -152,11 +157,26 @@ function DashboardContent({ searchQuery }) {
     }
   }, []);
 
+  const loadAdminSubmissions = useCallback(async () => {
+    setLoadingAdminSubmissions(true);
+    try {
+      const data = await adminSubmissionService.getSubmissions();
+      setAdminSubmissions(data || []);
+    } catch (err) {
+      console.error('Error loading admin submissions:', err);
+    } finally {
+      setLoadingAdminSubmissions(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (user?.role === 'admin' && adminTab === 'queries') {
       loadAdminQueries();
     }
-  }, [adminTab, user, loadAdminQueries]);
+    if (user?.role === 'admin' && adminTab === 'submissions') {
+      loadAdminSubmissions();
+    }
+  }, [adminTab, user, loadAdminQueries, loadAdminSubmissions]);
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -1304,6 +1324,28 @@ function DashboardContent({ searchQuery }) {
               </span>
             )}
           </span>
+          <span
+            onClick={() => setAdminTab('submissions')}
+            style={{
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: '700',
+              color: adminTab === 'submissions' ? 'var(--link-color)' : 'var(--text-muted)',
+              borderBottom: adminTab === 'submissions' ? '2px solid var(--link-color)' : 'none',
+              paddingBottom: '10px',
+              transition: 'color 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            Code Submissions
+            {adminSubmissions.length > 0 && (
+              <span style={{ backgroundColor: '#4f46e5', color: '#fff', borderRadius: '10px', padding: '1px 6px', fontSize: '0.65rem' }}>
+                {adminSubmissions.length}
+              </span>
+            )}
+          </span>
         </div>
 
         {/* Topics List Panel */}
@@ -1459,6 +1501,88 @@ function DashboardContent({ searchQuery }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Code Submissions Panel */}
+        {adminTab === 'submissions' && (
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+              Student Code Submissions
+            </h3>
+
+            {loadingAdminSubmissions ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '24px' }}>Loading submissions...</div>
+            ) : adminSubmissions.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '24px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                No code submissions yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {adminSubmissions.map((sub) => {
+                  const isExpanded = expandedSubmission === sub.id;
+                  return (
+                    <div
+                      key={sub.id}
+                      className="card"
+                      style={{ padding: '20px', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--link-color)' }}>SUB-#{sub.id}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              by <strong>@{sub.users?.username || 'unknown'}</strong>
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', backgroundColor: 'rgba(79, 70, 229, 0.15)', color: '#4f46e5', borderRadius: '4px' }}>
+                              {sub.todos?.title || 'Unknown Topic'}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              Q: {sub.question_title}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                            {new Date(sub.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => setExpandedSubmission(isExpanded ? null : sub.id)}
+                          style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          {isExpanded ? 'Hide Code' : 'View Code'}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points={isExpanded ? '18 15 12 9 6 15' : '6 9 12 15 18 9'}></polyline>
+                          </svg>
+                        </button>
+                      </div>
+
+                      {isExpanded && (
+                        <pre style={{
+                          margin: 0,
+                          padding: '16px',
+                          backgroundColor: '#1e1e2f',
+                          color: '#f8f8f2',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          fontSize: '0.8rem',
+                          fontFamily: 'monospace',
+                          overflowX: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all',
+                          maxHeight: '400px',
+                          overflowY: 'auto'
+                        }}>
+                          {sub.code}
+                        </pre>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
