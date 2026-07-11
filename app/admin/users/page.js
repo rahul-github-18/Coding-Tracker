@@ -118,6 +118,18 @@ function UserManagementContent() {
       
       const updateData = { [field]: !currentValue };
       await userService.updatePermissions(selectedUserId, updateData);
+      
+      // Update localStorage if modifying current logged in user
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (currentUser && currentUser.id === selectedUserId) {
+          const updatedUser = { ...currentUser, [field]: !currentValue };
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        }
+      } catch (e) {
+        console.error("Failed to update currentUser in localStorage", e);
+      }
+
       setSuccess('User permissions updated successfully.');
     } catch (err) {
       fetchUsers();
@@ -133,6 +145,18 @@ function UserManagementContent() {
       setUsersList(prev => prev.map(usr => usr.id === uId ? { ...usr, role: newRole } : usr));
       
       await userService.updatePermissions(uId, { role: newRole });
+
+      // Update localStorage if modifying current logged in user
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (currentUser && currentUser.id === uId) {
+          const updatedUser = { ...currentUser, role: newRole };
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        }
+      } catch (e) {
+        console.error("Failed to update currentUser in localStorage", e);
+      }
+
       setSuccess('User role updated.');
     } catch (err) {
       fetchUsers();
@@ -321,30 +345,18 @@ function UserManagementContent() {
           <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>Select a user above to configure permissions.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#1a73e8', color: '#ffffff' }}>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Module</th>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Menu Name</th>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>Can Add</th>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>Can Edit</th>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>Can Delete</th>
-                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>Can View</th>
+                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Permission</th>
+                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</th>
+                  <th style={{ padding: '14px 16px', color: '#ffffff', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {/* Module Group 1 */}
-                <tr style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
-                  <td colSpan={6} style={{ padding: '10px 16px', fontWeight: '700', color: '#1a73e8', fontSize: '0.9rem' }}>
-                    System Administration
-                  </td>
-                </tr>
                 <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>System Administration</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Main Dashboard</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
+                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Can View</td>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>Grant read-only access to view curriculum topics, questions, code templates, and notes.</td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                     <input 
                       type="checkbox" 
@@ -356,9 +368,8 @@ function UserManagementContent() {
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>System Administration</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Role Permissions Config</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
+                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Can Edit</td>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>Grant edit access to add, edit, and modify curriculum topics, questions, code templates, and notes.</td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                     <input 
                       type="checkbox" 
@@ -367,99 +378,16 @@ function UserManagementContent() {
                       disabled={selectedUser.username === 'admin'}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                     />
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_view} 
-                      onChange={() => handleToggleSelectedUserPermission('can_view', selectedUser.can_view)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* Module Group 2 */}
-                <tr style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
-                  <td colSpan={6} style={{ padding: '10px 16px', fontWeight: '700', color: '#1a73e8', fontSize: '0.9rem' }}>
-                    Curriculum Management
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>Curriculum Management</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Curriculum Topics & Questions</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_edit} 
-                      onChange={() => handleToggleSelectedUserPermission('can_edit', selectedUser.can_edit)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_edit} 
-                      onChange={() => handleToggleSelectedUserPermission('can_edit', selectedUser.can_edit)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
+                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Can Delete</td>
+                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>Grant delete access to remove curriculum topics and questions.</td>
                   <td style={{ padding: '14px 16px', textAlign: 'center' }}>
                     <input 
                       type="checkbox" 
                       checked={!!selectedUser.can_delete} 
                       onChange={() => handleToggleSelectedUserPermission('can_delete', selectedUser.can_delete)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_view} 
-                      onChange={() => handleToggleSelectedUserPermission('can_view', selectedUser.can_view)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* Module Group 3 */}
-                <tr style={{ backgroundColor: 'var(--btn-secondary-bg)' }}>
-                  <td colSpan={6} style={{ padding: '10px 16px', fontWeight: '700', color: '#1a73e8', fontSize: '0.9rem' }}>
-                    Code Sharing
-                  </td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
-                  <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>Code Sharing</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700', color: 'var(--text-heading)' }}>Share Code Master</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_edit} 
-                      onChange={() => handleToggleSelectedUserPermission('can_edit', selectedUser.can_edit)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_edit} 
-                      onChange={() => handleToggleSelectedUserPermission('can_edit', selectedUser.can_edit)}
-                      disabled={selectedUser.username === 'admin'}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</td>
-                  <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={!!selectedUser.can_view} 
-                      onChange={() => handleToggleSelectedUserPermission('can_view', selectedUser.can_view)}
                       disabled={selectedUser.username === 'admin'}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                     />
