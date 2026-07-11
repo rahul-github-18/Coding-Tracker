@@ -1208,7 +1208,7 @@ function DashboardContent({ searchQuery }) {
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No topics match search.</div>
             ) : (
               groupedTasks.slice(topicPage * 8, (topicPage + 1) * 8).map((group) => {
-                const qTotal = group.questions.length;
+                const qTotal = group.total_questions || 0;
                 return (
                   <div 
                     key={group.id} 
