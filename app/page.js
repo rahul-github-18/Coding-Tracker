@@ -1163,12 +1163,7 @@ function DashboardContent({ searchQuery }) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Welcome Banner */}
-      <div className="card" style={{ minHeight: 'auto', padding: '24px', background: 'linear-gradient(135deg, #1e293b, #0f172a)', border: 'none', color: '#ffffff', display: 'flex', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: '800', margin: 0, color: '#ffffff' }}>
-          Welcome, {user.username}!
-        </h2>
-      </div>
+
 
       {user.role !== 'admin' && !user.approved && (
         <div style={{ padding: '16px', backgroundColor: '#fef7e0', border: '1px solid #feebc8', borderRadius: '8px', color: '#c05621', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>

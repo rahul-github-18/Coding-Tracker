@@ -22,6 +22,7 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
   // PDF Preview States
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [pdfDoc, setPdfDoc] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Sync theme class to document body
   useEffect(() => {
@@ -141,6 +142,11 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
   const getFormattedDate = () => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date().toLocaleDateString('en-US', options);
+  };
+
+  const formatUsername = (username) => {
+    if (!username) return '';
+    return username.charAt(0).toUpperCase() + username.slice(1);
   };
 
   return (
@@ -367,9 +373,80 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
                 )}
               </button>
 
-              <button className="btn btn-danger" onClick={handleLogout} style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}>
-                Logout
-              </button>
+              {currentUser && (
+                <div style={{ position: 'relative' }}>
+                  <button 
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="btn btn-secondary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 14px',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Welcome, {formatUsername(currentUser.username)}
+                    <span style={{ fontSize: '0.65rem' }}>{dropdownOpen ? '▲' : '▼'}</span>
+                  </button>
+
+                  {dropdownOpen && (
+                    <>
+                      <div 
+                        onClick={() => setDropdownOpen(false)}
+                        style={{
+                          position: 'fixed',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          zIndex: 999
+                        }}
+                      />
+                      <div 
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 8px)',
+                          right: 0,
+                          backgroundColor: 'var(--card-bg)',
+                          border: '1px solid var(--card-border)',
+                          borderRadius: '6px',
+                          boxShadow: 'var(--card-shadow)',
+                          padding: '8px',
+                          minWidth: '160px',
+                          zIndex: 1000,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        <div style={{ padding: '6px 8px', fontSize: '0.75rem', color: 'var(--text-muted)', borderBottom: '1px solid var(--card-border)', marginBottom: '4px' }}>
+                          Logged in as <strong>{currentUser.username}</strong>
+                        </div>
+                        <button 
+                          className="btn btn-danger" 
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          style={{ 
+                            width: '100%', 
+                            padding: '8px', 
+                            fontSize: '0.8rem', 
+                            fontWeight: '600',
+                            textAlign: 'center',
+                            display: 'block'
+                          }}
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </header>
