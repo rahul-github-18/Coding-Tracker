@@ -320,7 +320,7 @@ body {
 
 .card-title:hover {
   color: var(--link-color);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .card-title.completed {

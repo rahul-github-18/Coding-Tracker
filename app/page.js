@@ -1460,7 +1460,27 @@ function DashboardContent({ searchQuery }) {
                     const progressPercent = totalQs > 0 ? Math.round((completedQCount / totalQs) * 100) : 0;
 
                     return (
-                      <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div 
+                        key={topic.id} 
+                        className="card" 
+                        onClick={() => router.push(`/todo/${topic.id}`)}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          border: '1px solid var(--card-border)',
+                          transition: 'transform 0.2s ease, border-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--link-color)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--card-border)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
                         <div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
