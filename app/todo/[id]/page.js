@@ -420,16 +420,17 @@ function TodoDetailContent() {
       doc.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 10;
 
-      addText(`Total Questions: ${questions.length}`, 13, true, [0, 0, 0], 8);
+      const sortedQuestions = [...questions].sort((a, b) => {
+        const diffA = getDisplayDifficulty(a.difficulty);
+        const diffB = getDisplayDifficulty(b.difficulty);
+        return (difficultyOrder[diffA] || 1) - (difficultyOrder[diffB] || 1);
+      });
 
-      questions.forEach((q, idx) => {
+      addText(`Total Questions: ${sortedQuestions.length}`, 13, true, [0, 0, 0], 8);
+
+      sortedQuestions.forEach((q, idx) => {
         addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
         addText(`Difficulty: ${getDisplayDifficulty(q.difficulty)}`, 9, false, [100, 100, 100], 4);
-
-        if (q.description) {
-          addText(`Description:`, 9, true, [80, 80, 80], 2);
-          addText(q.description, 9.5, false, [50, 50, 50], 4);
-        }
 
         if (q.explanation) {
           addText(`Explanation:`, 9, true, [80, 80, 80], 2);
@@ -462,7 +463,7 @@ function TodoDetailContent() {
           yPos += boxHeight + 4;
         }
 
-        if (idx < questions.length - 1) {
+        if (idx < sortedQuestions.length - 1) {
           if (yPos + 10 > pageHeight - margin) {
             doc.addPage();
             yPos = 20;
