@@ -393,8 +393,9 @@ function TodoDetailContent() {
         yPos += spacing;
       };
 
-      addText(`CURRICULUM TOPIC: ${topic.title.toUpperCase()}`, 16, true, [26, 115, 232], 8);
-      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Easy'} | Estimated Time: ${topic.estimated_time || '1 hour'}`, 10, false, [128, 128, 128], 10);
+      addText(topic.title.toUpperCase(), 16, true, [26, 115, 232], 6);
+      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Easy'}`, 10, false, [128, 128, 128], 4);
+      addText(`Made with ❤️ for learners by Rahul Ranjan | LinkedIn: https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/`, 9, false, [100, 100, 100], 10);
       
       doc.setDrawColor(200, 200, 200);
       doc.line(margin, yPos, pageWidth - margin, yPos);
@@ -404,7 +405,7 @@ function TodoDetailContent() {
 
       questions.forEach((q, idx) => {
         addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
-        addText(`Difficulty: ${getDisplayDifficulty(q.difficulty)} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
+        addText(`Difficulty: ${getDisplayDifficulty(q.difficulty)}`, 9, false, [100, 100, 100], 4);
 
         if (q.description) {
           addText(`Description:`, 9, true, [80, 80, 80], 2);
