@@ -67,13 +67,7 @@ function TodoDetailContent() {
     }
   }, [topicId, router]);
 
-  useEffect(() => {
-    if (questions && questions.length > 0 && user && (user.role === 'admin' || user.can_edit)) {
-      questions.slice(questionPage * 10, (questionPage + 1) * 10).forEach(q => {
-        router.prefetch(`/question/${q.id}`);
-      });
-    }
-  }, [questions, questionPage, router, user]);
+
 
   const loadTopicData = async (u) => {
     setLoading(true);
@@ -813,15 +807,6 @@ function TodoDetailContent() {
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Explanation / Notes</span>
-                              {(user?.role === 'admin' || user?.can_edit) && (
-                                <button 
-                                  className="btn btn-secondary" 
-                                  style={{ padding: '2px 8px', fontSize: '0.7rem' }}
-                                  onClick={() => router.push(`/question/${q.id}?focus=notes`)}
-                                >
-                                  Edit Notes &rarr;
-                                </button>
-                              )}
                             </div>
                             <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--text-color)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                               {q.explanation}
@@ -832,15 +817,6 @@ function TodoDetailContent() {
                           <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                               <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Code Template</span>
-                              {(user?.role === 'admin' || user?.can_edit) && (
-                                <button 
-                                  className="btn btn-secondary" 
-                                  style={{ padding: '2px 8px', fontSize: '0.7rem' }}
-                                  onClick={() => router.push(`/question/${q.id}?focus=code`)}
-                                >
-                                  Open Editor &rarr;
-                                </button>
-                              )}
                             </div>
                             <pre style={{ margin: 0, padding: '12px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '6px', fontSize: '0.85rem', fontFamily: 'monospace', overflowX: 'auto', border: '1px solid var(--card-border)', color: 'var(--text-color)' }}>
                               <code>{q.code}</code>
