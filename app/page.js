@@ -1353,470 +1353,112 @@ function DashboardContent({ searchQuery }) {
       {success && <div className="save-indicator" style={{ marginBottom: '12px' }}>{success}</div>}
 
       {filter === 'all' ? (
-          /* Curriculum Management Split View (Master-Detail) */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'stretch' }}>
-            
-            {/* Left Side: Topic Navigation Menu (Master Panel) */}
-            <div className="card" style={{ padding: '20px', minHeight: 'auto', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                  Curriculum Topics
-                </h3>
-                {user?.role === 'admin' && (
-                  <button 
-                    className="btn btn-primary" 
-                    onClick={() => {
-                      setNewTopic({ title: '', category: 'General', difficulty: 'Easy', estimatedTime: '1 hour' });
-                      setActiveForm('createTopic');
-                    }}
-                    style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
-                  >
-                    + Add Topic
-                  </button>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {groupedTasks.length === 0 ? (
-                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No topics match search.</div>
-                ) : (
-                  groupedTasks.slice(topicPage * 8, (topicPage + 1) * 8).map((group) => {
-                    const isActive = selectedTopicId === group.id;
-                    const qTotal = group.questions.length;
-
-                    return (
-                      <div 
-                        key={group.id}
-                        onClick={() => {
-                          setSelectedTopicId(group.id);
-                          setQuestionPage(0);
-                        }}
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: '8px',
-                          border: `1px solid ${isActive ? 'var(--link-color)' : 'var(--card-border)'}`,
-                          backgroundColor: isActive ? 'rgba(26, 115, 232, 0.08)' : 'var(--list-item-bg)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.65rem', fontWeight: '600', padding: '1px 4px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                            {group.category}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: '700', color: isActive ? 'var(--link-color)' : 'var(--text-heading)' }}>
-                          {group.title}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          Questions: {qTotal}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {groupedTasks.length > 8 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={() => setTopicPage(p => Math.max(0, p - 1))}
-                    disabled={topicPage === 0}
-                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                  >
-                    &larr; Prev
-                  </button>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    {topicPage * 8 + 1} - {Math.min((topicPage + 1) * 8, groupedTasks.length)} of {groupedTasks.length}
-                  </span>
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={() => setTopicPage(p => ((p + 1) * 8 < groupedTasks.length ? p + 1 : p))}
-                    disabled={(topicPage + 1) * 8 >= groupedTasks.length}
-                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                  >
-                    Next &rarr;
-                  </button>
-                </div>
-              )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
+                Curriculum Topics
+              </h2>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>
+                Browse curriculum topics, select a topic to view its questions and track your progress.
+              </p>
             </div>
+            {user?.role === 'admin' && (
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setNewTopic({ title: '', category: 'General', difficulty: 'Easy', estimatedTime: '1 hour' });
+                  setActiveForm('createTopic');
+                }}
+                style={{ padding: '10px 20px', fontWeight: '600' }}
+              >
+                + Add Topic
+              </button>
+            )}
+          </div>
 
-            {/* Right Side: Questions & Details for Selected Topic (Detail Panel) */}
-            {(() => {
-              const activeGroup = groupedTasks.find(g => g.id === selectedTopicId) || groupedTasks[0];
-              if (!activeGroup) {
+          <div className="todos-grid" style={{ marginTop: '12px' }}>
+            {groupedTasks.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No topics match search.</div>
+            ) : (
+              groupedTasks.slice(topicPage * 8, (topicPage + 1) * 8).map((group) => {
+                const qTotal = group.questions.length;
                 return (
-                  <div className="card" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No topic selected.
+                  <div 
+                    key={group.id} 
+                    className="card" 
+                    onClick={() => router.push(`/todo/${group.id}`)}
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      justifyContent: 'space-between', 
+                      cursor: 'pointer',
+                      border: '1px solid var(--card-border)',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                      minHeight: '160px',
+                      padding: '20px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--link-color)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--card-border)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                          {group.category}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: getDisplayDifficulty(group.difficulty) === 'Hard' ? '#d93025' : getDisplayDifficulty(group.difficulty) === 'Medium' ? '#b06000' : '#137333' }}>
+                          {getDisplayDifficulty(group.difficulty)}
+                        </span>
+                      </div>
+                      <h4 className="card-title" style={{ fontSize: '1.15rem', fontWeight: '700', margin: '8px 0', color: 'var(--text-heading)' }}>
+                        {group.title}
+                      </h4>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Questions: {qTotal}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--link-color)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        View Questions &rarr;
+                      </span>
+                    </div>
                   </div>
                 );
-              }
-
-              const topicQs = activeGroup.questions || [];
-              const completedQs = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed'));
-              const pendingQs = topicQs.filter(q => !userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed'));
-
-              const displayedQuestions = (() => {
-                if (questionFilter === 'completed') return completedQs;
-                if (questionFilter === 'pending') return pendingQs;
-                return topicQs;
-              })();
-
-              const handleKPIFilterClick = (filterType) => {
-                setQuestionFilter(prev => prev === filterType ? 'all' : filterType);
-                setQuestionPage(0);
-              };
-
-              return (
-                <div className="card" style={{ padding: '24px', minHeight: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--card-border)', paddingBottom: '16px', marginBottom: '20px' }}>
-                    <div>
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '6px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                          {activeGroup.category}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '500', color: getDisplayDifficulty(activeGroup.difficulty) === 'Hard' ? '#d93025' : getDisplayDifficulty(activeGroup.difficulty) === 'Medium' ? '#b06000' : '#137333' }}>
-                          {getDisplayDifficulty(activeGroup.difficulty)}
-                        </span>
-                      </div>
-                      <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                        {activeGroup.title}
-                      </h3>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      {user?.role === 'admin' && (
-                        <>
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => {
-                              setEditingTopic(activeGroup);
-                              setActiveForm('editTopic');
-                            }}
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}
-                          >
-                            Edit Topic
-                          </button>
-                          <button
-                            className="btn btn-danger"
-                            onClick={() => handleDeleteTopic(activeGroup.id)}
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}
-                          >
-                            Delete Topic
-                          </button>
-                        </>
-                      )}
-                      {user?.role !== 'admin' && (
-                        <button
-                          className="btn"
-                          onClick={() => handleToggleTopicSelection(activeGroup.id)}
-                          style={{
-                            padding: '6px 14px',
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            backgroundColor: userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) 
-                              ? '#e6f4ea' 
-                              : 'var(--btn-secondary-bg)',
-                            color: userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id)
-                              ? '#137333'
-                              : 'var(--text-color)',
-                            border: '1px solid ' + (userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) ? '#ceead6' : 'var(--card-border)')
-                          }}
-                        >
-                          {userTasks.some(t => t.item_type === 'topic' && t.item_id === activeGroup.id) ? '✓ Selected' : '+ Select Topic'}
-                        </button>
-                      )}
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        onClick={() => handleExportTopicPDF(activeGroup)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Export Topic
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* KPI Cards Row */}
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                    <div 
-                      onClick={() => handleKPIFilterClick('completed')}
-                      style={{
-                        flex: 1,
-                        minWidth: '130px',
-                        padding: '10px 14px',
-                        borderRadius: '6px',
-                        border: `1.5px solid ${questionFilter === 'completed' ? '#137333' : 'var(--card-border)'}`,
-                        backgroundColor: questionFilter === 'completed' ? 'rgba(19, 115, 51, 0.08)' : 'var(--list-item-bg)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        boxShadow: 'var(--card-shadow)'
-                      }}
-                    >
-                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Completed Questions
-                      </span>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#137333', margin: 0 }}>
-                        {completedQs.length}
-                      </h3>
-                      <span style={{ fontSize: '0.65rem', color: '#137333', fontWeight: '600' }}>
-                        {questionFilter === 'completed' ? '● Filtering Active (Reset)' : 'Filter completed'}
-                      </span>
-                    </div>
-
-                    <div 
-                      onClick={() => handleKPIFilterClick('pending')}
-                      style={{
-                        flex: 1,
-                        minWidth: '130px',
-                        padding: '10px 14px',
-                        borderRadius: '6px',
-                        border: `1.5px solid ${questionFilter === 'pending' ? '#b06000' : 'var(--card-border)'}`,
-                        backgroundColor: questionFilter === 'pending' ? 'rgba(176, 96, 0, 0.08)' : 'var(--list-item-bg)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        boxShadow: 'var(--card-shadow)'
-                      }}
-                    >
-                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Pending Questions
-                      </span>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '900', color: '#b06000', margin: 0 }}>
-                        {pendingQs.length}
-                      </h3>
-                      <span style={{ fontSize: '0.65rem', color: '#b06000', fontWeight: '600' }}>
-                        {questionFilter === 'pending' ? '● Filtering Active (Reset)' : 'Filter pending'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
-                      Curriculum Questions {questionFilter !== 'all' && `(${questionFilter === 'completed' ? 'Completed' : 'Pending'})`}
-                    </h4>
-                    {user?.role === 'admin' && (
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          setNewQuestionForm({
-                            title: '',
-                            difficulty: 'Easy',
-                            tags: '',
-                            description: '',
-                            code: '',
-                            explanation: ''
-                          });
-                          setActiveForm('createQuestion');
-                        }}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}
-                      >
-                        + Add Question
-                      </button>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {topicQs.length === 0 ? (
-                      <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
-                        No questions registered under this curriculum topic.
-                      </div>
-                    ) : displayedQuestions.length === 0 ? (
-                      <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--text-muted)', border: '1.5px dashed var(--card-border)', borderRadius: '8px', fontSize: '0.85rem' }}>
-                        {questionFilter === 'completed' ? 'No completed questions found.' : 'All questions completed! No pending questions.'}
-                      </div>
-                    ) : (
-                      displayedQuestions.slice(questionPage * 10, (questionPage + 1) * 10).map((q) => {
-                        const isExpanded = expandedQuestionId === q.id;
-                        return (
-                          <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0', border: '1px solid var(--card-border)', borderRadius: '8px', overflow: 'hidden' }}>
-                            {/* Main Question Header Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--list-item-bg)' }}>
-                              <div 
-                                onClick={() => setExpandedQuestionId(isExpanded ? null : q.id)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, marginRight: '16px', cursor: 'pointer' }}
-                              >
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '12px', textAlign: 'center' }}>
-                                  {isExpanded ? '▼' : '▶'}
-                                </span>
-                                <span style={{ 
-                                  fontSize: '0.65rem', 
-                                  padding: '2.5px 7px', 
-                                  borderRadius: '4px', 
-                                  textTransform: 'uppercase', 
-                                  fontWeight: '700',
-                                  backgroundColor: getDisplayDifficulty(q.difficulty) === 'Hard' ? '#fde8e8' : getDisplayDifficulty(q.difficulty) === 'Medium' ? '#fef3c7' : '#e6f4ea',
-                                  color: getDisplayDifficulty(q.difficulty) === 'Hard' ? '#d93025' : getDisplayDifficulty(q.difficulty) === 'Medium' ? '#b06000' : '#137333',
-                                  border: '1px solid ' + (getDisplayDifficulty(q.difficulty) === 'Hard' ? '#f8b4b4' : getDisplayDifficulty(q.difficulty) === 'Medium' ? '#fcd34d' : '#ceead6')
-                                }}>
-                                  {getDisplayDifficulty(q.difficulty)}
-                                </span>
-                                <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-heading)' }}>
-                                  {q.title}
-                                </span>
-                              </div>
-                              
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {/* Completed Button */}
-                                <button
-                                  className="btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleToggleQuestionCompletion(q.id);
-                                  }}
-                                  style={{
-                                    padding: '4px 10px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '600',
-                                    backgroundColor: userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed') 
-                                      ? '#e6f4ea' 
-                                      : 'var(--btn-secondary-bg)',
-                                    color: userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed')
-                                      ? '#137333'
-                                      : 'var(--text-color)',
-                                    border: '1px solid ' + (userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed') ? '#ceead6' : 'var(--card-border)')
-                                  }}
-                                >
-                                  {userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed') ? '✓ Completed' : 'Completed'}
-                                </button>
-
-                                {user?.role === 'admin' && (
-                                  <>
-                                    <button
-                                      className="btn btn-secondary"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingQuestion(q);
-                                        setActiveForm('editQuestion');
-                                      }}
-                                      style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      className="btn btn-danger"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteQuestion(q.id);
-                                      }}
-                                      style={{ padding: '4px 10px', fontSize: '0.75rem', fontWeight: '600' }}
-                                    >
-                                      Delete
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Collapsible Details Body */}
-                            {isExpanded && (
-                              <div style={{ 
-                                padding: '16px', 
-                                backgroundColor: 'var(--card-bg)', 
-                                borderTop: '1px solid var(--card-border)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px'
-                              }}>
-                                {/* Badges & Metadata */}
-                                {q.tags && (
-                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                    {q.tags.split(',').map((tag, idx) => (
-                                      <span key={idx} style={{ fontSize: '0.7rem', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
-                                        {tag.trim()}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Description */}
-                                {q.description && (
-                                  <div>
-                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Description</h5>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-color)', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
-                                      {q.description}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {/* Explanation */}
-                                {q.explanation && (
-                                  <div>
-                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Explanation</h5>
-                                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-color)', lineHeight: '1.4', whiteSpace: 'pre-wrap' }}>
-                                      {q.explanation}
-                                    </p>
-                                  </div>
-                                )}
-
-                                {/* Code Template */}
-                                {q.code && (
-                                  <div>
-                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-heading)' }}>Code</h5>
-                                    <pre style={{ 
-                                      margin: 0, 
-                                      padding: '12px', 
-                                      backgroundColor: '#1e1e1e', 
-                                      color: '#d4d4d4', 
-                                      borderRadius: '6px', 
-                                      fontFamily: 'monospace', 
-                                      fontSize: '0.8rem', 
-                                      overflowX: 'auto',
-                                      lineHeight: '1.4'
-                                    }}>
-                                      <code>{q.code}</code>
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  {displayedQuestions.length > 10 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={() => setQuestionPage(p => Math.max(0, p - 1))}
-                        disabled={questionPage === 0}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      >
-                        &larr; Previous 10
-                      </button>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                        Showing {questionPage * 10 + 1} - {Math.min((questionPage + 1) * 10, displayedQuestions.length)} of {displayedQuestions.length} Questions
-                      </span>
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={() => setQuestionPage(p => ((p + 1) * 10 < displayedQuestions.length ? p + 1 : p))}
-                        disabled={(questionPage + 1) * 10 >= displayedQuestions.length}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      >
-                        Next 10 &rarr;
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
+              })
+            )}
           </div>
-        ) : (
+
+          {groupedTasks.length > 8 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setTopicPage(p => Math.max(0, p - 1))}
+                disabled={topicPage === 0}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+              >
+                &larr; Prev
+              </button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Showing {topicPage * 8 + 1} - {Math.min((topicPage + 1) * 8, groupedTasks.length)} of {groupedTasks.length} Topics
+              </span>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setTopicPage(p => ((p + 1) * 8 < groupedTasks.length ? p + 1 : p))}
+                disabled={(topicPage + 1) * 8 >= groupedTasks.length}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+              >
+                Next &rarr;
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
         /* Default Home Dashboard - explore curriculum and general progress */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
