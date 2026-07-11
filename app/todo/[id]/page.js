@@ -69,22 +69,12 @@ function TodoDetailContent() {
     setLoading(true);
     setError('');
     try {
-      // Fetch all topics and find the matching one
-      const allTopics = await todoService.getTodos();
-      const currentTopic = allTopics.find(t => t.id === topicId);
-      if (!currentTopic) {
-        setError('Curriculum topic not found.');
-        setLoading(false);
-        return;
-      }
-      setTopic(currentTopic);
-
-      // Fetch questions for this topic
-      const qs = await questionService.getQuestions(topicId);
-      setQuestions(qs || []);
-
-      // Fetch user tasks
-      const tasks = await taskService.getUserTasks();
+      const [topicDetail, tasks] = await Promise.all([
+        todoService.getTodo(topicId),
+        taskService.getUserTasks()
+      ]);
+      setTopic(topicDetail);
+      setQuestions(topicDetail.questions || []);
       setUserTasks(tasks || []);
     } catch (err) {
       console.error(err);

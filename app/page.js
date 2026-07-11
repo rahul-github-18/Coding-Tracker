@@ -17,7 +17,6 @@ const getDisplayDifficulty = (difficulty) => {
 function DashboardContent({ searchQuery }) {
   const [user, setUser] = useState(null);
   const [topics, setTopics] = useState([]);
-  const [allQuestions, setAllQuestions] = useState([]);
   const [selectedTopicId, setSelectedTopicId] = useState(null);
   const [questionPage, setQuestionPage] = useState(0);
   const [topicPage, setTopicPage] = useState(0);
@@ -102,8 +101,7 @@ function DashboardContent({ searchQuery }) {
       const promises = [
         todoService.getTodos(),
         taskService.getUserTasks(),
-        taskService.getUserStats(),
-        questionService.getAllQuestions()
+        taskService.getUserStats()
       ];
 
       if (u.role === 'admin') {
@@ -112,7 +110,7 @@ function DashboardContent({ searchQuery }) {
         promises.push(Promise.resolve(null));
       }
 
-      const [allTopics, tasks, stats, allQs, allUsers] = await Promise.all(promises);
+      const [allTopics, tasks, stats, allUsers] = await Promise.all(promises);
       console.timeEnd('API: Parallel Fetch Dashboard Data');
 
       setTopics(allTopics || []);
@@ -123,7 +121,6 @@ function DashboardContent({ searchQuery }) {
         setSelectedTopicId(prev => prev || allTopics[0].id);
       }
       setUserTasks(tasks || []);
-      setAllQuestions(allQs || []);
       setUserStats(stats || {
         streak: 0,
         completedTasksCount: 0,
@@ -365,111 +362,7 @@ function DashboardContent({ searchQuery }) {
     });
   };
 
-  const handleExportTopicPDF = (topic) => {
-    if (!topic) return;
-    const questionsForTopic = allQuestions.filter(q => q.todo_id === topic.id);
 
-    import('jspdf').then(({ jsPDF }) => {
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 15;
-      const contentWidth = pageWidth - 2 * margin;
-
-      let yPos = 20;
-
-      const addText = (text, fontSize = 10, isBold = false, color = [0, 0, 0], spacing = 5) => {
-        doc.setFontSize(fontSize);
-        doc.setFont('helvetica', isBold ? 'bold' : 'normal');
-        doc.setTextColor(color[0], color[1], color[2]);
-
-        const lines = doc.splitTextToSize(text, contentWidth);
-        const requiredHeight = lines.length * (fontSize * 0.4) + spacing;
-        if (yPos + requiredHeight > pageHeight - margin) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        lines.forEach(line => {
-          doc.text(line, margin, yPos);
-          yPos += (fontSize * 0.4);
-        });
-
-        yPos += spacing;
-      };
-
-      addText(`CURRICULUM TOPIC: ${topic.title.toUpperCase()}`, 16, true, [26, 115, 232], 8);
-      addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Easy'} | Estimated Time: ${topic.estimated_time || '1 hour'}`, 10, false, [128, 128, 128], 10);
-      
-      doc.setDrawColor(200, 200, 200);
-      doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 10;
-
-      addText(`Questions (${questionsForTopic.length})`, 13, true, [0, 0, 0], 8);
-
-      questionsForTopic.forEach((q, idx) => {
-        addText(`${idx + 1}. ${q.title}`, 11, true, [0, 0, 0], 4);
-        addText(`Difficulty: ${getDisplayDifficulty(q.difficulty)} | Tags: ${q.tags || 'None'}`, 9, false, [100, 100, 100], 4);
-
-        if (q.description) {
-          addText(`Description:`, 9, true, [80, 80, 80], 2);
-          addText(q.description, 9.5, false, [50, 50, 50], 4);
-        }
-
-        if (q.explanation) {
-          addText(`Explanation:`, 9, true, [80, 80, 80], 2);
-          addText(q.explanation, 9.5, false, [50, 50, 50], 6);
-        }
-
-        if (q.code) {
-          addText(`Code:`, 9, true, [80, 80, 80], 2);
-          doc.setFontSize(8.5);
-          doc.setFont('courier', 'normal');
-          doc.setTextColor(50, 50, 50);
-          
-          const codeLines = doc.splitTextToSize(q.code, contentWidth - 6);
-          const boxHeight = codeLines.length * 3.8 + 6;
-
-          if (yPos + boxHeight > pageHeight - margin) {
-            doc.addPage();
-            yPos = 20;
-          }
-
-          doc.setFillColor(245, 245, 245);
-          doc.rect(margin, yPos, contentWidth, boxHeight, 'F');
-          
-          let codeY = yPos + 4;
-          codeLines.forEach(line => {
-            doc.text(line, margin + 3, codeY);
-            codeY += 3.8;
-          });
-
-          yPos += boxHeight + 4;
-        }
-
-        if (idx < questionsForTopic.length - 1) {
-          if (yPos + 10 > pageHeight - margin) {
-            doc.addPage();
-            yPos = 20;
-          } else {
-            doc.setDrawColor(240, 240, 240);
-            doc.line(margin, yPos, pageWidth - margin, yPos);
-            yPos += 8;
-          }
-        }
-      });
-
-      doc.save(`${topic.title.replace(/\s+/g, '_')}_Curriculum.pdf`);
-    }).catch(err => {
-      console.error("Failed to load jsPDF library:", err);
-      setError("Failed to generate PDF document.");
-    });
-  };
 
   const renderModal = () => {
     if (!activeForm) return null;
@@ -1103,23 +996,19 @@ function DashboardContent({ searchQuery }) {
       };
     }
 
-    const completedQuestionIds = new Set(
-      userTasks.filter(t => t.item_type === 'question' && t.status === 'Completed').map(t => t.item_id)
-    );
-
     let totalQuestionsInSelected = 0;
     let completedQuestionsInSelected = 0;
     let completedTopicsCount = 0;
 
     topics.forEach(topic => {
       if (selectedTopicIds.has(topic.id)) {
-        const topicQs = allQuestions.filter(q => q.todo_id === topic.id);
-        totalQuestionsInSelected += topicQs.length;
+        const totalQs = topic.total_questions || 0;
+        const completedQs = topic.completed_questions || 0;
         
-        const completedQs = topicQs.filter(q => completedQuestionIds.has(q.id));
-        completedQuestionsInSelected += completedQs.length;
+        totalQuestionsInSelected += totalQs;
+        completedQuestionsInSelected += completedQs;
 
-        if (topicQs.length > 0 && completedQs.length === topicQs.length) {
+        if (totalQs > 0 && completedQs === totalQs) {
           completedTopicsCount++;
         }
       }
@@ -1135,61 +1024,7 @@ function DashboardContent({ searchQuery }) {
       totalTopicsCount: selectedTopicIds.size,
       learningPercentage
     };
-  }, [topics, allQuestions, userTasks]);
-
-  const renderTasks = useMemo(() => {
-    if (filter === 'today') {
-      return userTasks.filter(t => t.status !== 'Completed').map(t => ({
-        id: `today_${t.id}`,
-        dbId: t.item_id,
-        item_type: t.item_type,
-        title: t.details?.title || 'Coding task',
-        status: t.status,
-        taskId: t.id
-      }));
-    }
-    
-    // For filter === 'all'
-    const statusMap = {};
-    userTasks.forEach(t => {
-      statusMap[`${t.item_type}_${t.item_id}`] = {
-        id: t.id,
-        status: t.status
-      };
-    });
-
-    const items = [];
-    topics.forEach(topic => {
-      const state = statusMap[`topic_${topic.id}`] || {};
-      items.push({
-        id: `topic_${topic.id}`,
-        dbId: topic.id,
-        item_type: 'topic',
-        title: topic.title,
-        status: state.status || 'Pending',
-        taskId: state.id || null
-      });
-
-      // Add questions for this topic
-      const topicQuestions = allQuestions.filter(q => q.todo_id === topic.id);
-      topicQuestions.forEach(q => {
-        const qState = statusMap[`question_${q.id}`] || {};
-        items.push({
-          id: `question_${q.id}`,
-          dbId: q.id,
-          item_type: 'question',
-          title: `${topic.title} > ${q.title}`,
-          status: qState.status || 'Pending',
-          taskId: qState.id || null
-        });
-      });
-    });
-
-    if (searchQuery) {
-      return items.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    return items;
-  }, [topics, allQuestions, userTasks, filter, searchQuery]);
+  }, [topics, userTasks]);
 
   const groupedTasks = useMemo(() => {
     const statusMap = {};
@@ -1203,15 +1038,6 @@ function DashboardContent({ searchQuery }) {
     const groups = topics.map(topic => {
       const topicTask = statusMap[`topic_${topic.id}`] || {};
       
-      const topicQuestions = allQuestions.filter(q => q.todo_id === topic.id).map(q => {
-        const qTask = statusMap[`question_${q.id}`] || {};
-        return {
-          ...q,
-          status: qTask.status || 'Pending',
-          taskId: qTask.id || null
-        };
-      });
-
       return {
         id: topic.id,
         title: topic.title,
@@ -1219,18 +1045,18 @@ function DashboardContent({ searchQuery }) {
         difficulty: topic.difficulty,
         status: topicTask.status || 'Pending',
         taskId: topicTask.id || null,
-        questions: topicQuestions
+        total_questions: topic.total_questions || 0
       };
     });
 
     if (searchQuery) {
       return groups.filter(g => 
         g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        g.questions.some(q => q.title.toLowerCase().includes(searchQuery.toLowerCase()))
+        g.category.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     return groups;
-  }, [topics, allQuestions, userTasks, searchQuery]);
+  }, [topics, userTasks, searchQuery]);
 
   const allTasksCount = useMemo(() => {
     return groupedTasks.reduce((acc, g) => acc + 1 + g.questions.length, 0);
@@ -1601,9 +1427,7 @@ function DashboardContent({ searchQuery }) {
                 const isSelected = selectedTopicIds.has(topic.id);
                 if (!isSelected || !matchesSearch) return false;
 
-                const topicQs = allQuestions.filter(q => q.todo_id === topic.id);
-                const completedQCount = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed')).length;
-                const isCompleted = topicQs.length > 0 && completedQCount === topicQs.length;
+                const isCompleted = topic.completed;
 
                 if (dashboardFilter === 'completed') return isCompleted;
                 if (dashboardFilter === 'pending') return !isCompleted;
@@ -1634,9 +1458,9 @@ function DashboardContent({ searchQuery }) {
               return (
                 <div className="todos-grid">
                   {displayedTopics.map((topic) => {
-                    const topicQs = allQuestions.filter(q => q.todo_id === topic.id);
-                    const completedQCount = topicQs.filter(q => userTasks.some(t => t.item_type === 'question' && t.item_id === q.id && t.status === 'Completed')).length;
-                    const progressPercent = topicQs.length > 0 ? Math.round((completedQCount / topicQs.length) * 100) : 0;
+                    const totalQs = topic.total_questions || 0;
+                    const completedQCount = topic.completed_questions || 0;
+                    const progressPercent = totalQs > 0 ? Math.round((completedQCount / totalQs) * 100) : 0;
 
                     return (
                       <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

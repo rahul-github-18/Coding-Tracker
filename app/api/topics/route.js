@@ -108,9 +108,13 @@ export async function GET(req) {
       const totalItems = qTotal + eTotal + nTotal;
 
       let completedItems = 0;
+      let completedQuestions = 0;
       if (topicQuestionsMap[todo.id]) {
         topicQuestionsMap[todo.id].forEach(qId => {
-          if (completedQuestionIds.has(qId)) completedItems++;
+          if (completedQuestionIds.has(qId)) {
+            completedItems++;
+            completedQuestions++;
+          }
         });
       }
       if (topicExamplesMap[todo.id]) {
@@ -129,6 +133,7 @@ export async function GET(req) {
       return {
         ...todo,
         total_questions: qTotal,
+        completed_questions: completedQuestions,
         total_examples: eTotal,
         total_notes: nTotal,
         completed_items: completedItems,
