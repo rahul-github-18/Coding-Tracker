@@ -1629,59 +1629,56 @@ function DashboardContent({ searchQuery }) {
             )}
           </div>
         )}
+
+        {/* Submission Feedback Modal - inline to stay within admin return scope */}
+        {replyingSubmission && (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1100, backdropFilter: 'blur(4px)', padding: '20px'
+            }}
+          >
+            <div style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', width: '100%', maxWidth: '500px', padding: '24px', boxShadow: 'var(--card-shadow)', position: 'relative', textAlign: 'left' }}>
+              <button
+                onClick={() => { setReplyingSubmission(null); setSubmissionReplyText(''); }}
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.4rem', lineHeight: 1 }}
+              >
+                &times;
+              </button>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>
+                Feedback for SUB-#{replyingSubmission.id}
+              </h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
+                @{replyingSubmission.users?.username} &mdash; {replyingSubmission.question_title}
+              </p>
+              <form onSubmit={handleSubmissionReplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>Your Feedback</label>
+                  <textarea
+                    required
+                    rows={5}
+                    className="search-bar"
+                    placeholder="Write your code review / feedback here..."
+                    value={submissionReplyText}
+                    onChange={(e) => setSubmissionReplyText(e.target.value)}
+                    style={{ width: '100%', borderRadius: '8px', padding: '12px', fontSize: '0.9rem', minHeight: '120px', resize: 'vertical' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => { setReplyingSubmission(null); setSubmissionReplyText(''); }} disabled={submittingSubmissionReply}>Cancel</button>
+                  <button type="submit" className="btn btn-primary" disabled={submittingSubmissionReply}>
+                    {submittingSubmissionReply ? 'Saving...' : 'Save Feedback'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
-
-  // Submission feedback reply modal (admin)
-  const renderSubmissionReplyModal = () => {
-    if (!replyingSubmission) return null;
-    return (
-      <div
-        style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.65)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1100, backdropFilter: 'blur(4px)', padding: '20px'
-        }}
-      >
-        <div style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '12px', width: '100%', maxWidth: '500px', padding: '24px', boxShadow: 'var(--card-shadow)', position: 'relative', textAlign: 'left' }}>
-          <button
-            onClick={() => { setReplyingSubmission(null); setSubmissionReplyText(''); }}
-            style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.25rem' }}
-          >
-            &times;
-          </button>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 4px 0' }}>
-            Feedback for SUB-#{replyingSubmission.id}
-          </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0 0 16px 0' }}>
-            @{replyingSubmission.users?.username} — {replyingSubmission.question_title}
-          </p>
-          <form onSubmit={handleSubmissionReplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>Your Feedback</label>
-              <textarea
-                required
-                rows={5}
-                className="search-bar"
-                placeholder="Write your code review / feedback here..."
-                value={submissionReplyText}
-                onChange={(e) => setSubmissionReplyText(e.target.value)}
-                style={{ width: '100%', borderRadius: '8px', padding: '12px', fontSize: '0.9rem', minHeight: '120px', resize: 'vertical' }}
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => { setReplyingSubmission(null); setSubmissionReplyText(''); }} disabled={submittingSubmissionReply}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={submittingSubmissionReply}>
-                {submittingSubmissionReply ? 'Saving...' : 'Save Feedback'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
 
   // RENDER USER DASHBOARD (Or Admin Task board view when navigating tabs)
   return (
@@ -2505,8 +2502,7 @@ function DashboardContent({ searchQuery }) {
         </div>
       )}
 
-      {/* Submission Feedback Modal (admin) */}
-      {renderSubmissionReplyModal()}
+      {/* Submission Feedback Modal handled in admin return block */}
     </div>
   );
 }
