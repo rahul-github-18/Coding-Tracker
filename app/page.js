@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import { todoService, userService, taskService, questionService } from '@/lib/api';
+import { todoService, userService, taskService, questionService, userQueryService, adminQueryService } from '@/lib/api';
 
 const getDisplayDifficulty = (difficulty) => {
   if (!difficulty) return 'Easy';
@@ -40,6 +40,33 @@ function DashboardContent({ searchQuery }) {
     notesCount: 0,
     usersCount: 0
   });
+
+  // Floating Query Button / Modal States
+  const [fabOpen, setFabOpen] = useState(false);
+  const [showQueryModal, setShowQueryModal] = useState(false);
+  const [showSubmitCodeModal, setShowSubmitCodeModal] = useState(false);
+
+  // Ask Query Form States
+  const [queryText, setQueryText] = useState('');
+  const [submittingQuery, setSubmittingQuery] = useState(false);
+  const [querySuccess, setQuerySuccess] = useState('');
+
+  // Submit Code Form States
+  const [submitCodeTopicId, setSubmitCodeTopicId] = useState('');
+  const [submitCodeQuestionTitle, setSubmitCodeQuestionTitle] = useState('');
+  const [submitCodeContent, setSubmitCodeContent] = useState('');
+  const [topicQuestions, setTopicQuestions] = useState([]);
+  const [loadingTopicQuestions, setLoadingTopicQuestions] = useState(false);
+  const [submittingCode, setSubmittingCode] = useState(false);
+  const [codeSuccess, setCodeSuccess] = useState('');
+
+  // Admin Dashboard Query States
+  const [adminTab, setAdminTab] = useState('topics'); // 'topics' | 'queries'
+  const [adminQueries, setAdminQueries] = useState([]);
+  const [loadingAdminQueries, setLoadingAdminQueries] = useState(false);
+  const [replyingQuery, setReplyingQuery] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -88,6 +115,122 @@ function DashboardContent({ searchQuery }) {
       }
     }
   }, [router, filter, searchParams]);
+
+  useEffect(() => {
+    if (!submitCodeTopicId) {
+      setTopicQuestions([]);
+      return;
+    }
+    const fetchQuestions = async () => {
+      setLoadingTopicQuestions(true);
+      try {
+        const data = await questionService.getQuestions(submitCodeTopicId);
+        setTopicQuestions(data || []);
+        if (data && data.length > 0) {
+          setSubmitCodeQuestionTitle(data[0].title);
+        } else {
+          setSubmitCodeQuestionTitle('');
+        }
+      } catch (err) {
+        console.error('Error fetching questions for dynamic select:', err);
+      } finally {
+        setLoadingTopicQuestions(false);
+      }
+    };
+    fetchQuestions();
+  }, [submitCodeTopicId]);
+
+  const loadAdminQueries = useCallback(async () => {
+    setLoadingAdminQueries(true);
+    try {
+      const data = await adminQueryService.getQueries();
+      setAdminQueries(data || []);
+    } catch (err) {
+      console.error('Error loading admin queries:', err);
+    } finally {
+      setLoadingAdminQueries(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user?.role === 'admin' && adminTab === 'queries') {
+      loadAdminQueries();
+    }
+  }, [adminTab, user, loadAdminQueries]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (user?.role === 'admin' && adminTab === 'queries') {
+        loadAdminQueries();
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('refresh-queries', handleRefresh);
+      return () => window.removeEventListener('refresh-queries', handleRefresh);
+    }
+  }, [user, adminTab, loadAdminQueries]);
+
+  const handleQuerySubmit = async (e) => {
+    e.preventDefault();
+    if (!queryText.trim()) return;
+    setSubmittingQuery(true);
+    setQuerySuccess('');
+    try {
+      const newQ = await userQueryService.submitQuery(queryText);
+      setQuerySuccess(`Query submitted successfully! Your Ticket ID is QRY-#${newQ.id}`);
+      setQueryText('');
+      window.dispatchEvent(new Event('refresh-notifications'));
+      setTimeout(() => {
+        setShowQueryModal(false);
+        setQuerySuccess('');
+      }, 3000);
+    } catch (err) {
+      console.error('Query submission error:', err);
+    } finally {
+      setSubmittingQuery(false);
+    }
+  };
+
+  const handleCodeSubmit = async (e) => {
+    e.preventDefault();
+    if (!submitCodeTopicId || !submitCodeQuestionTitle.trim() || !submitCodeContent.trim()) return;
+    setSubmittingCode(true);
+    setCodeSuccess('');
+    try {
+      await userQueryService.submitCode(
+        parseInt(submitCodeTopicId, 10),
+        submitCodeQuestionTitle.trim(),
+        submitCodeContent.trim()
+      );
+      setCodeSuccess('Code submitted successfully!');
+      setSubmitCodeContent('');
+      setTimeout(() => {
+        setShowSubmitCodeModal(false);
+        setCodeSuccess('');
+      }, 2000);
+    } catch (err) {
+      console.error('Code submission error:', err);
+    } finally {
+      setSubmittingCode(false);
+    }
+  };
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    if (!replyingQuery || !replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      await adminQueryService.submitReply(replyingQuery.id, replyText);
+      setReplyingQuery(null);
+      setReplyText('');
+      loadAdminQueries();
+      window.dispatchEvent(new Event('refresh-notifications'));
+    } catch (err) {
+      console.error('Reply submission error:', err);
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
 
   useEffect(() => {
     setVisibleCurriculumCount(8);
@@ -1123,72 +1266,203 @@ function DashboardContent({ searchQuery }) {
 
 
 
-        {/* Topics List */}
-        <div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+        {/* Sub-tab Navigation */}
+        <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid var(--card-border)', paddingBottom: '12px', marginTop: '12px' }}>
+          <span
+            onClick={() => setAdminTab('topics')}
+            style={{
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: '700',
+              color: adminTab === 'topics' ? 'var(--link-color)' : 'var(--text-muted)',
+              borderBottom: adminTab === 'topics' ? '2px solid var(--link-color)' : 'none',
+              paddingBottom: '10px',
+              transition: 'color 0.15s ease'
+            }}
+          >
             Curriculum Topics
-          </h3>
-          <div className="todos-grid">
-            {filteredTopics.slice(0, visibleAdminCount).map((topic) => (
-              <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
-                      {topic.category}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '500', color: getDisplayDifficulty(topic.difficulty) === 'Hard' ? '#d93025' : getDisplayDifficulty(topic.difficulty) === 'Medium' ? '#b06000' : '#137333' }}>
-                      {getDisplayDifficulty(topic.difficulty)}
-                    </span>
-                  </div>
-                  <h4 className="card-title" onClick={() => router.push(`/todo/${topic.id}`)}>
-                    {topic.title}
-                  </h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '8px 0 0 0' }}>
-                    Est. Time: {topic.estimated_time}
-                  </p>
-                </div>
-                <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Questions: {topic.total_questions || 0}
-                  </span>
-                  <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/todo/${topic.id}`)}>
-                    Manage Content
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredTopics.length > visibleAdminCount && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setVisibleAdminCount(prev => prev + 8)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px', 
-                  padding: '10px 24px', 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  borderRadius: '30px',
-                  border: '1px solid var(--card-border)',
-                  backgroundColor: 'var(--card-bg)',
-                  boxShadow: 'var(--card-shadow)',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(1px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                <span>View More</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
-            </div>
-          )}
+          </span>
+          <span
+            onClick={() => setAdminTab('queries')}
+            style={{
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: '700',
+              color: adminTab === 'queries' ? 'var(--link-color)' : 'var(--text-muted)',
+              borderBottom: adminTab === 'queries' ? '2px solid var(--link-color)' : 'none',
+              paddingBottom: '10px',
+              transition: 'color 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            Student Queries
+            {adminQueries.filter(q => !q.reply_text).length > 0 && (
+              <span style={{ backgroundColor: '#ff4d4f', color: '#fff', borderRadius: '10px', padding: '1px 6px', fontSize: '0.65rem' }}>
+                {adminQueries.filter(q => !q.reply_text).length}
+              </span>
+            )}
+          </span>
         </div>
+
+        {/* Topics List Panel */}
+        {adminTab === 'topics' && (
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+              Curriculum Topics
+            </h3>
+            <div className="todos-grid">
+              {filteredTopics.slice(0, visibleAdminCount).map((topic) => (
+                <div key={topic.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '2px 6px', backgroundColor: 'var(--btn-secondary-bg)', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                        {topic.category}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: '500', color: getDisplayDifficulty(topic.difficulty) === 'Hard' ? '#d93025' : getDisplayDifficulty(topic.difficulty) === 'Medium' ? '#b06000' : '#137333' }}>
+                        {getDisplayDifficulty(topic.difficulty)}
+                      </span>
+                    </div>
+                    <h4 className="card-title" onClick={() => router.push(`/todo/${topic.id}`)}>
+                      {topic.title}
+                    </h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '8px 0 0 0' }}>
+                      Est. Time: {topic.estimated_time}
+                    </p>
+                  </div>
+                  <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Questions: {topic.total_questions || 0}
+                    </span>
+                    <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/todo/${topic.id}`)}>
+                      Manage Content
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredTopics.length > visibleAdminCount && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setVisibleAdminCount(prev => prev + 8)}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    padding: '10px 24px', 
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    borderRadius: '30px',
+                    border: '1px solid var(--card-border)',
+                    backgroundColor: 'var(--card-bg)',
+                    boxShadow: 'var(--card-shadow)',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(1px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <span>View More</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Queries List Panel */}
+        {adminTab === 'queries' && (
+          <div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-heading)' }}>
+              Support Tickets & Student Queries
+            </h3>
+            
+            {loadingAdminQueries ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '24px' }}>Loading tickets...</div>
+            ) : adminQueries.length === 0 ? (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '24px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                No student queries submitted.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {adminQueries.map((q) => (
+                  <div 
+                    key={q.id} 
+                    className="card" 
+                    style={{ 
+                      padding: '20px', 
+                      border: '1px solid var(--card-border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--link-color)' }}>
+                            QRY-#{q.id}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Submitted by <strong>@{q.users?.username || 'unknown'}</strong>
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                          Date: {new Date(q.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontWeight: '600',
+                        backgroundColor: q.reply_text ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        color: q.reply_text ? '#10b981' : '#f59e0b'
+                      }}>
+                        {q.reply_text ? 'Replied' : 'Pending Response'}
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', margin: 0, backgroundColor: 'var(--body-bg)', padding: '12px', borderRadius: '6px', border: '1px solid var(--card-border)', whiteSpace: 'pre-wrap' }}>
+                      {q.query_text}
+                    </p>
+
+                    {q.reply_text && (
+                      <div style={{ marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981', display: 'block', marginBottom: '4px' }}>Your Response:</span>
+                        <p style={{ fontSize: '0.85rem', color: '#10b981', margin: 0, backgroundColor: 'rgba(16, 185, 129, 0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.1)', whiteSpace: 'pre-wrap' }}>
+                          {q.reply_text}
+                        </p>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                          Replied at: {new Date(q.replied_at).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={() => {
+                          setReplyingQuery(q);
+                          setReplyText(q.reply_text || '');
+                        }}
+                        style={{ padding: '6px 16px', fontSize: '0.8rem', fontWeight: '600' }}
+                      >
+                        {q.reply_text ? 'Edit Response' : 'Reply & Answer'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -1554,6 +1828,466 @@ function DashboardContent({ searchQuery }) {
         </div>
       )}
       {renderModal()}
+
+      {/* Floating Query Button (FAB) - only visible to students */}
+      {user && user.role !== 'admin' && (
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 1050 }}>
+          {fabOpen && (
+            <div 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '12px', 
+                marginBottom: '16px', 
+                alignItems: 'flex-end' 
+              }}
+            >
+              {/* Option 1: Ask Query */}
+              <button
+                onClick={() => {
+                  setFabOpen(false);
+                  setShowQueryModal(true);
+                }}
+                className="btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '24px',
+                  color: 'var(--text-heading)',
+                  boxShadow: 'var(--card-shadow)',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transform: 'scale(1)',
+                  transition: 'transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <span>Ask Query</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+
+              {/* Option 2: Submit Code */}
+              <button
+                onClick={() => {
+                  setFabOpen(false);
+                  setShowSubmitCodeModal(true);
+                  if (topics && topics.length > 0) {
+                    setSubmitCodeTopicId(topics[0].id.toString());
+                  }
+                }}
+                className="btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '24px',
+                  color: 'var(--text-heading)',
+                  boxShadow: 'var(--card-shadow)',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transform: 'scale(1)',
+                  transition: 'transform 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                <span>Submit Code</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6"></polyline>
+                  <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Main Floating Button */}
+          <button
+            onClick={() => setFabOpen(!fabOpen)}
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--link-color) 0%, #4f46e5 100%)',
+              border: 'none',
+              color: '#ffffff',
+              boxShadow: '0 8px 16px rgba(59, 130, 246, 0.3)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: fabOpen ? 'rotate(45deg)' : 'rotate(0)',
+              transition: 'transform 0.2s ease, background 0.2s ease'
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Ask Query Modal */}
+      {showQueryModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            backdropFilter: 'blur(4px)',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: 'var(--card-shadow)',
+              position: 'relative',
+              textAlign: 'left'
+            }}
+          >
+            <button 
+              onClick={() => setShowQueryModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1.25rem'
+              }}
+            >
+              &times;
+            </button>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 16px 0' }}>
+              Ask a Query
+            </h3>
+            
+            {querySuccess && (
+              <div className="save-indicator" style={{ marginBottom: '16px' }}>{querySuccess}</div>
+            )}
+            
+            <form onSubmit={handleQuerySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                  How can we help you?
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  className="search-bar"
+                  placeholder="Describe your issue, error, or question..."
+                  value={queryText}
+                  onChange={(e) => setQueryText(e.target.value)}
+                  style={{
+                    width: '100%',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '0.9rem',
+                    minHeight: '120px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowQueryModal(false)}
+                  disabled={submittingQuery}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={submittingQuery}
+                >
+                  {submittingQuery ? 'Submitting...' : 'Submit Query'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Code Modal */}
+      {showSubmitCodeModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            backdropFilter: 'blur(4px)',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '600px',
+              padding: '24px',
+              boxShadow: 'var(--card-shadow)',
+              position: 'relative',
+              textAlign: 'left'
+            }}
+          >
+            <button 
+              onClick={() => setShowSubmitCodeModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1.25rem'
+              }}
+            >
+              &times;
+            </button>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 16px 0' }}>
+              Submit Your Code Solution
+            </h3>
+            
+            {codeSuccess && (
+              <div className="save-indicator" style={{ marginBottom: '16px' }}>{codeSuccess}</div>
+            )}
+            
+            <form onSubmit={handleCodeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                    Topic
+                  </label>
+                  <select
+                    className="search-bar"
+                    value={submitCodeTopicId}
+                    onChange={(e) => setSubmitCodeTopicId(e.target.value)}
+                    style={{ width: '100%', padding: '10px' }}
+                  >
+                    {topics.map(t => (
+                      <option key={t.id} value={t.id}>{t.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                    Question
+                  </label>
+                  {loadingTopicQuestions ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '10px' }}>Loading questions...</div>
+                  ) : topicQuestions.length === 0 ? (
+                    <div style={{ fontSize: '0.85rem', color: '#ff4d4f', padding: '10px' }}>No questions in this topic</div>
+                  ) : (
+                    <select
+                      className="search-bar"
+                      value={submitCodeQuestionTitle}
+                      onChange={(e) => setSubmitCodeQuestionTitle(e.target.value)}
+                      style={{ width: '100%', padding: '10px' }}
+                    >
+                      {topicQuestions.map(q => (
+                        <option key={q.id} value={q.title}>{q.title}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                  Code Content
+                </label>
+                <textarea
+                  required
+                  rows={10}
+                  className="search-bar"
+                  placeholder="// Paste your solution code here..."
+                  value={submitCodeContent}
+                  onChange={(e) => setSubmitCodeContent(e.target.value)}
+                  style={{
+                    width: '100%',
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    minHeight: '200px',
+                    resize: 'vertical',
+                    backgroundColor: '#1e1e2f',
+                    color: '#f8f8f2',
+                    border: '1px solid var(--card-border)'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowSubmitCodeModal(false)}
+                  disabled={submittingCode}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={submittingCode || topicQuestions.length === 0}
+                >
+                  {submittingCode ? 'Submitting...' : 'Submit Code'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Reply Modal */}
+      {replyingQuery && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            backdropFilter: 'blur(4px)',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: 'var(--card-shadow)',
+              position: 'relative',
+              textAlign: 'left'
+            }}
+          >
+            <button 
+              onClick={() => {
+                setReplyingQuery(null);
+                setReplyText('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1.25rem'
+              }}
+            >
+              &times;
+            </button>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 16px 0' }}>
+              Reply to Query QRY-#{replyingQuery.id}
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>Student: @{replyingQuery.users?.username || 'unknown'}</span>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-color)', margin: '6px 0 0 0', padding: '10px', backgroundColor: 'var(--body-bg)', borderRadius: '6px', border: '1px solid var(--card-border)', maxHeight: '100px', overflowY: 'auto' }}>
+                {replyingQuery.query_text}
+              </p>
+            </div>
+            
+            <form onSubmit={handleReplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                  Your Response
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  className="search-bar"
+                  placeholder="Type your reply here..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  style={{
+                    width: '100%',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '0.9rem',
+                    minHeight: '120px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => {
+                    setReplyingQuery(null);
+                    setReplyText('');
+                  }}
+                  disabled={submittingReply}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={submittingReply}
+                >
+                  {submittingReply ? 'Submitting...' : 'Submit Response'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import Sidebar from './Sidebar';
 import { generateNotesPDF } from '@/lib/pdfExport';
+import { userQueryService } from '@/lib/api';
 
 const Layout = ({ children, searchQuery, setSearchQuery }) => {
   const router = useRouter();
@@ -14,6 +14,39 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  // Ticketing and Notification states
+  const [queries, setQueries] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [selectedQueryDetail, setSelectedQueryDetail] = useState(null);
+
+  const fetchUserQueries = useCallback(async () => {
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!userId) return;
+    try {
+      const data = await userQueryService.getQueries();
+      setQueries(data || []);
+      const unread = (data || []).filter(q => q.reply_text && !q.is_read_by_user).length;
+      setUnreadCount(unread);
+    } catch (e) {
+      console.error('Error fetching user queries for notifications:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUserQueries();
+    // Poll queries every 30 seconds for real-time notifications
+    const interval = setInterval(fetchUserQueries, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUserQueries]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('refresh-notifications', fetchUserQueries);
+      return () => window.removeEventListener('refresh-notifications', fetchUserQueries);
+    }
+  }, [fetchUserQueries]);
 
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -374,10 +407,171 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
               </button>
 
               {currentUser && (
-                <div style={{ position: 'relative' }}>
-                  <button 
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="btn btn-secondary"
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {currentUser.role !== 'admin' && (
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setNotificationsOpen(!notificationsOpen)}
+                        className="btn btn-secondary"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '8px',
+                          fontSize: '1.1rem',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          border: '1px solid var(--card-border)',
+                          backgroundColor: 'var(--card-bg)'
+                        }}
+                        aria-label="View notifications"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        {unreadCount > 0 && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '-4px',
+                            right: '-4px',
+                            backgroundColor: '#ff4d4f',
+                            color: '#fff',
+                            borderRadius: '50%',
+                            padding: '2px 6px',
+                            fontSize: '0.65rem',
+                            fontWeight: 'bold',
+                            border: '2px solid var(--body-bg)',
+                            lineHeight: '1',
+                            minWidth: '16px',
+                            height: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
+
+                      {notificationsOpen && (
+                        <>
+                          <div 
+                            onClick={() => setNotificationsOpen(false)}
+                            style={{
+                              position: 'fixed',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              zIndex: 999
+                            }}
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: '42px',
+                              right: 0,
+                              width: '320px',
+                              maxHeight: '400px',
+                              overflowY: 'auto',
+                              backgroundColor: 'var(--card-bg)',
+                              border: '1px solid var(--card-border)',
+                              borderRadius: '8px',
+                              boxShadow: 'var(--card-shadow)',
+                              zIndex: 1000,
+                              padding: '8px 0',
+                              backdropFilter: 'blur(16px)',
+                              WebkitBackdropFilter: 'blur(16px)'
+                            }}
+                          >
+                            <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--card-border)', fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--text-heading)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span>Support Notifications</span>
+                              {unreadCount > 0 && <span style={{ fontSize: '0.75rem', color: '#ff4d4f', fontWeight: 'normal' }}>{unreadCount} unread</span>}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              {queries.length === 0 ? (
+                                <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                  No queries submitted yet.
+                                </div>
+                              ) : (
+                                queries.map((q) => {
+                                  const isUnread = q.reply_text && !q.is_read_by_user;
+                                  return (
+                                    <div
+                                      key={q.id}
+                                      onClick={async () => {
+                                        setNotificationsOpen(false);
+                                        setSelectedQueryDetail(q);
+                                        if (isUnread) {
+                                          try {
+                                            await userQueryService.markQueryAsRead(q.id);
+                                            fetchUserQueries();
+                                            // Trigger reload in student dashboard
+                                            window.dispatchEvent(new Event('refresh-queries'));
+                                          } catch (err) {
+                                            console.error('Error marking query read:', err);
+                                          }
+                                        }
+                                      }}
+                                      style={{
+                                        padding: '12px 16px',
+                                        borderBottom: '1px solid var(--card-border)',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '4px',
+                                        backgroundColor: isUnread ? 'rgba(56, 189, 248, 0.08)' : 'transparent',
+                                        transition: 'background-color 0.15s ease',
+                                        textAlign: 'left'
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--btn-secondary-bg)'}
+                                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isUnread ? 'rgba(56, 189, 248, 0.08)' : 'transparent'}
+                                    >
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--link-color)' }}>
+                                          QRY-#{q.id}
+                                        </span>
+                                        <span style={{
+                                          fontSize: '0.65rem',
+                                          padding: '2px 6px',
+                                          borderRadius: '4px',
+                                          fontWeight: '600',
+                                          backgroundColor: q.reply_text ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                          color: q.reply_text ? '#10b981' : '#f59e0b'
+                                        }}>
+                                          {q.reply_text ? 'Replied' : 'Pending'}
+                                        </span>
+                                      </div>
+                                      <p style={{ fontSize: '0.8rem', color: 'var(--text-color)', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                        {q.query_text}
+                                      </p>
+                                      {q.reply_text && (
+                                        <p style={{ fontSize: '0.75rem', color: '#10b981', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: '500' }}>
+                                          Reply: {q.reply_text}
+                                        </p>
+                                      )}
+                                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                        {new Date(q.created_at).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ position: 'relative' }}>
+                    <button 
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="btn btn-secondary"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -446,7 +640,8 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
                     </>
                   )}
                 </div>
-              )}
+              </div>
+            )}
             </div>
           </div>
         </header>
@@ -542,6 +737,95 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
                   Download PDF
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Query Detail Modal */}
+      {selectedQueryDetail && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            backdropFilter: 'blur(4px)',
+            padding: '20px'
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
+              position: 'relative',
+              textAlign: 'left'
+            }}
+          >
+            <button 
+              onClick={() => setSelectedQueryDetail(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1.25rem'
+              }}
+            >
+              &times;
+            </button>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)', margin: '0 0 16px 0', borderBottom: '1px solid var(--card-border)', paddingBottom: '12px' }}>
+              Query Ticket: QRY-#{selectedQueryDetail.id}
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Query</span>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', margin: '4px 0 0 0', backgroundColor: 'var(--body-bg)', padding: '12px', borderRadius: '6px', border: '1px solid var(--card-border)', whiteSpace: 'pre-wrap' }}>
+                  {selectedQueryDetail.query_text}
+                </p>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  Submitted on {new Date(selectedQueryDetail.created_at).toLocaleString()}
+                </span>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Admin Response</span>
+                {selectedQueryDetail.reply_text ? (
+                  <>
+                    <p style={{ fontSize: '0.9rem', color: '#10b981', margin: '4px 0 0 0', backgroundColor: 'rgba(16, 185, 129, 0.05)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.2)', whiteSpace: 'pre-wrap', fontWeight: '500' }}>
+                      {selectedQueryDetail.reply_text}
+                    </p>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                      Replied on {new Date(selectedQueryDetail.replied_at).toLocaleString()}
+                    </span>
+                  </>
+                ) : (
+                  <p style={{ fontSize: '0.85rem', color: '#f59e0b', margin: '4px 0 0 0', fontStyle: 'italic', backgroundColor: 'rgba(245, 158, 11, 0.05)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                    Pending review by administrator. We will notify you here once answered.
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button className="btn btn-secondary" onClick={() => setSelectedQueryDetail(null)}>
+                Close Ticket
+              </button>
             </div>
           </div>
         </div>

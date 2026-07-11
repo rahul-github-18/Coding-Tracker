@@ -126,3 +126,24 @@ CREATE INDEX IF NOT EXISTS idx_user_tasks_user_id ON user_tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tasks_added_date ON user_tasks(added_date);
 CREATE INDEX IF NOT EXISTS idx_user_tasks_user_status ON user_tasks(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_user_tasks_user_item ON user_tasks(user_id, item_type, item_id);
+
+-- 9. Create user queries table with ticketing support
+CREATE TABLE IF NOT EXISTS user_queries (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  query_text TEXT NOT NULL,
+  reply_text TEXT DEFAULT NULL,
+  is_read_by_user BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  replied_at TIMESTAMP DEFAULT NULL
+);
+
+-- 10. Create user submissions table
+CREATE TABLE IF NOT EXISTS user_submissions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  topic_id INTEGER REFERENCES todos(id) ON DELETE CASCADE,
+  question_title VARCHAR(255) NOT NULL,
+  code TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
