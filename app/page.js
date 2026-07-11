@@ -1058,13 +1058,7 @@ function DashboardContent({ searchQuery }) {
     return groups;
   }, [topics, userTasks, searchQuery]);
 
-  const allTasksCount = useMemo(() => {
-    return groupedTasks.reduce((acc, g) => acc + 1 + g.questions.length, 0);
-  }, [groupedTasks]);
 
-  const completedTasksCount = useMemo(() => {
-    return groupedTasks.reduce((acc, g) => acc + (g.status === 'Completed' ? 1 : 0) + g.questions.filter(q => q.status === 'Completed').length, 0);
-  }, [groupedTasks]);
 
   if (!user) {
     return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>;
