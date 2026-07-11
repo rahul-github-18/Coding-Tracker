@@ -186,7 +186,7 @@ body {
   background-color: var(--btn-secondary-bg);
 }
 
-.desktop-actions {
+.header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -646,7 +646,7 @@ body {
   .desktop-nav {
     display: none !important;
   }
-  .desktop-actions {
+  .hide-on-mobile {
     display: none !important;
   }
   .app-container {
