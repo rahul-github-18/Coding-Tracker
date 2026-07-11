@@ -1354,10 +1354,10 @@ function DashboardContent({ searchQuery }) {
 
       {filter === 'all' ? (
           /* Curriculum Management Split View (Master-Detail) */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'stretch' }}>
             
             {/* Left Side: Topic Navigation Menu (Master Panel) */}
-            <div className="card" style={{ padding: '20px', minHeight: 'auto' }}>
+            <div className="card" style={{ padding: '20px', minHeight: 'auto', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-heading)', margin: 0 }}>
                   Curriculum Topics
@@ -1420,7 +1420,7 @@ function DashboardContent({ searchQuery }) {
               </div>
 
               {groupedTasks.length > 8 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid var(--card-border)', paddingTop: '16px' }}>
                   <button 
                     className="btn btn-secondary" 
                     onClick={() => setTopicPage(p => Math.max(0, p - 1))}
