@@ -419,6 +419,22 @@ function DashboardContent({ searchQuery }) {
     }
   };
 
+  const handleMoveTopic = async (topicId, direction) => {
+    setError('');
+    setSuccess('');
+    try {
+      await todoService.reorderTodo(topicId, direction);
+      setSuccess('Topic reordered successfully!');
+      const allTopics = await todoService.getTodos();
+      setTopics(allTopics || []);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to reorder topic.');
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
   const handleCreateQuestionSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -1460,10 +1476,32 @@ function DashboardContent({ searchQuery }) {
                       Est. Time: {topic.estimated_time}
                     </p>
                   </div>
-                  <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Questions: {topic.total_questions || 0}
-                    </span>
+                  <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Questions: {topic.total_questions || 0}
+                      </span>
+                      <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          disabled={filteredTopics.findIndex(x => x.id === topic.id) === 0}
+                          onClick={() => handleMoveTopic(topic.id, 'up')}
+                          style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Move Up"
+                        >
+                          ↑
+                        </button>
+                        <button 
+                          className="btn btn-secondary" 
+                          disabled={filteredTopics.findIndex(x => x.id === topic.id) === filteredTopics.length - 1}
+                          onClick={() => handleMoveTopic(topic.id, 'down')}
+                          style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Move Down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
                     <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }} onClick={() => router.push(`/todo/${topic.id}`)}>
                       Manage Content
                     </button>
@@ -1946,11 +1984,38 @@ function DashboardContent({ searchQuery }) {
                         {group.title}
                       </h4>
                     </div>
-                    <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Questions: {qTotal}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--link-color)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          Questions: {qTotal}
+                        </span>
+                        {user?.role === 'admin' && (
+                          <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
+                            <button 
+                              className="btn btn-secondary" 
+                              disabled={groupedTasks.findIndex(x => x.id === group.id) === 0}
+                              onClick={() => handleMoveTopic(group.id, 'up')}
+                              style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              title="Move Up"
+                            >
+                              ↑
+                            </button>
+                            <button 
+                              className="btn btn-secondary" 
+                              disabled={groupedTasks.findIndex(x => x.id === group.id) === groupedTasks.length - 1}
+                              onClick={() => handleMoveTopic(group.id, 'down')}
+                              style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              title="Move Down"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <span 
+                        style={{ fontSize: '0.75rem', color: 'var(--link-color)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                        onClick={() => router.push(`/todo/${group.id}`)}
+                      >
                         View Questions &rarr;
                       </span>
                     </div>

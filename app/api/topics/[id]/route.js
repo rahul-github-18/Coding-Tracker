@@ -37,7 +37,16 @@ export async function GET(req, { params }) {
     }
 
     // Filter questions, code examples, and notes associated with this topic
-    const topicQuestions = questions.filter(q => q.todo_id === topic.id);
+    const topicQuestions = questions
+      .filter(q => q.todo_id === topic.id)
+      .sort((a, b) => {
+        const orderA = a.sort_order !== undefined && a.sort_order !== null ? a.sort_order : 0;
+        const orderB = b.sort_order !== undefined && b.sort_order !== null ? b.sort_order : 0;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        return a.id - b.id;
+      });
     const topicExamples = codeExamples.filter(e => e.topic_id === topic.id);
     const topicNotes = notes.filter(n => n.topic_id === topic.id);
 

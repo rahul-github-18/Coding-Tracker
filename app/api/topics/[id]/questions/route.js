@@ -41,6 +41,7 @@ export async function GET(req, { params }) {
       .from('questions')
       .select('*')
       .eq('todo_id', id)
+      .order('sort_order', { ascending: true })
       .order('id', { ascending: true });
 
     if (qError) throw qError;

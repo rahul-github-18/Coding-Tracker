@@ -265,6 +265,21 @@ function TodoDetailContent() {
     }
   };
 
+  const handleMoveQuestion = async (questionId, direction) => {
+    setError('');
+    setSuccess('');
+    try {
+      await questionService.reorderQuestion(questionId, direction);
+      setSuccess('Question reordered successfully!');
+      await loadTopicData(user);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Failed to reorder question.');
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -507,9 +522,17 @@ function TodoDetailContent() {
     else list = topicQs;
 
     return [...list].sort((a, b) => {
+      const orderA = a.sort_order !== undefined && a.sort_order !== null ? a.sort_order : 0;
+      const orderB = b.sort_order !== undefined && b.sort_order !== null ? b.sort_order : 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
       const diffA = getDisplayDifficulty(a.difficulty);
       const diffB = getDisplayDifficulty(b.difficulty);
-      return (difficultyOrder[diffA] || 1) - (difficultyOrder[diffB] || 1);
+      if (diffA !== diffB) {
+        return (difficultyOrder[diffA] || 1) - (difficultyOrder[diffB] || 1);
+      }
+      return a.id - b.id;
     });
   })();
 
@@ -763,6 +786,34 @@ function TodoDetailContent() {
 
                         {user?.role === 'admin' && (
                           <>
+                            {questionFilter === 'all' && (
+                              <div style={{ display: 'flex', gap: '4px', marginRight: '4px' }}>
+                                <button
+                                  className="btn btn-secondary"
+                                  disabled={displayedQuestions.findIndex(x => x.id === q.id) === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveQuestion(q.id, 'up');
+                                  }}
+                                  style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Move Up"
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  className="btn btn-secondary"
+                                  disabled={displayedQuestions.findIndex(x => x.id === q.id) === displayedQuestions.length - 1}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveQuestion(q.id, 'down');
+                                  }}
+                                  style={{ padding: '2px 6px', fontSize: '0.7rem', lineHeight: 1, minWidth: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Move Down"
+                                >
+                                  ↓
+                                </button>
+                              </div>
+                            )}
                             <button
                               className="btn btn-secondary"
                               onClick={(e) => {

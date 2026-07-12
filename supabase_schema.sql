@@ -169,3 +169,8 @@ CREATE TABLE IF NOT EXISTS login_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_login_history_user_id ON login_history(user_id);
+
+-- Migration: Add sort_order columns for custom ordering (Run in Supabase SQL editor)
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+

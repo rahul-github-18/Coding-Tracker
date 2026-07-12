@@ -61,8 +61,15 @@ export async function GET(req) {
       filteredTodos = filteredTodos.filter(t => t.category === category);
     }
 
-    // Sort descending by ID
-    filteredTodos = [...filteredTodos].sort((a, b) => b.id - a.id);
+    // Sort by sort_order ascending, then ID descending
+    filteredTodos = [...filteredTodos].sort((a, b) => {
+      const orderA = a.sort_order !== undefined && a.sort_order !== null ? a.sort_order : 0;
+      const orderB = b.sort_order !== undefined && b.sort_order !== null ? b.sort_order : 0;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return b.id - a.id;
+    });
 
     // Maps for counting items per todo (topic)
     const questionsCountMap = {};
