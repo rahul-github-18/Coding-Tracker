@@ -328,6 +328,23 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
                 Curriculum
               </span>
 
+              <a
+                href="https://kodediaryide.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="desktop-nav-link"
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: 'var(--text-color)',
+                  textDecoration: 'none',
+                  transition: 'color 0.15s ease'
+                }}
+              >
+                Code Editor
+              </a>
+
               <span
                 className={`desktop-nav-link ${pathname === '/share-code' ? 'active' : ''}`}
                 onClick={() => handleNavigate('/share-code')}

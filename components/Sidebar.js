@@ -21,8 +21,8 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
   }, []);
 
   useEffect(() => {
-    const isStandalone = 
-      (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) || 
+    const isStandalone =
+      (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
       (typeof window !== 'undefined' && window.navigator.standalone === true);
 
     if (isStandalone) {
@@ -84,14 +84,14 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', textDecoration: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img 
-            src="/logo.png" 
-            alt="CodeDiary Logo" 
-            style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px' }} 
+          <img
+            src="/logo.png"
+            alt="CodeDiary Logo"
+            style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px' }}
           />
           <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-heading)' }}>CodeDiary</span>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="sidebar-close-btn"
           style={{
@@ -137,6 +137,18 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
           >
             Curriculum
           </div>
+        </li>
+
+        <li>
+          <a
+            href="https://kodediaryide.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-link"
+            onClick={onClose}
+          >
+            Code Editor
+          </a>
         </li>
 
         <li>
