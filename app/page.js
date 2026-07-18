@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import { todoService, userService, taskService, questionService, userQueryService, adminQueryService, adminSubmissionService } from '@/lib/api';
+import { todoService, userService, taskService, questionService, userQueryService, adminQueryService, adminSubmissionService, noteService } from '@/lib/api';
 
 const getDisplayDifficulty = (difficulty) => {
   if (!difficulty) return 'Easy';
@@ -38,7 +38,8 @@ function DashboardContent({ searchQuery }) {
     questionsCount: 0,
     examplesCount: 0,
     notesCount: 0,
-    usersCount: 0
+    usersCount: 0,
+    standaloneNotesCount: 0
   });
 
   // Floating Query Button / Modal States
@@ -308,11 +309,13 @@ function DashboardContent({ searchQuery }) {
 
       if (u.role === 'admin') {
         promises.push(userService.getUsers());
+        promises.push(noteService.getNotes());
       } else {
+        promises.push(Promise.resolve(null));
         promises.push(Promise.resolve(null));
       }
 
-      const [allTopics, tasks, stats, allUsers] = await Promise.all(promises);
+      const [allTopics, tasks, stats, allUsers, standaloneNotes] = await Promise.all(promises);
       console.timeEnd('API: Parallel Fetch Dashboard Data');
 
       setTopics(allTopics || []);
@@ -351,7 +354,8 @@ function DashboardContent({ searchQuery }) {
           questionsCount: qCount,
           examplesCount: eCount,
           notesCount: nCount,
-          usersCount: allUsers.length
+          usersCount: allUsers.length,
+          standaloneNotesCount: standaloneNotes ? standaloneNotes.length : 0
         });
       }
     } catch (err) {
@@ -1374,15 +1378,42 @@ function DashboardContent({ searchQuery }) {
             { title: 'Total Questions', count: adminStats.questionsCount },
             { title: 'Total Notes', count: adminStats.notesCount },
             { title: 'Code Examples', count: adminStats.examplesCount },
-            { title: 'Total Users', count: adminStats.usersCount }
+            { title: 'Total Users', count: adminStats.usersCount },
+            { title: 'Admin Notes', count: adminStats.standaloneNotesCount || 0, link: '/admin/notes', isAction: true }
           ].map((card, idx) => (
-            <div key={idx} className="card" style={{ minHeight: '120px', padding: '16px', position: 'relative', overflow: 'hidden' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <div 
+              key={idx} 
+              className="card" 
+              onClick={card.link ? () => router.push(card.link) : undefined}
+              style={{ 
+                minHeight: '120px', 
+                padding: '16px', 
+                position: 'relative', 
+                overflow: 'hidden',
+                cursor: card.link ? 'pointer' : 'default',
+                border: card.isAction ? '1.5px solid var(--link-color)' : '1px solid var(--card-border)',
+                transition: card.link ? 'transform 0.2s ease, box-shadow 0.2s ease' : 'none'
+              }}
+              onMouseEnter={card.link ? (e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.15)';
+              } : undefined}
+              onMouseLeave={card.link ? (e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--card-shadow)';
+              } : undefined}
+            >
+              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: card.isAction ? 'var(--link-color)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
                 {card.title}
               </span>
               <h3 style={{ fontSize: '2.25rem', fontWeight: '800', color: 'var(--text-heading)', marginTop: '8px', margin: 0 }}>
                 {card.count}
               </h3>
+              {card.link && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--link-color)', fontWeight: '700', display: 'block', marginTop: '10px' }}>
+                  Manage Notes &rarr;
+                </span>
+              )}
             </div>
           ))}
         </div>

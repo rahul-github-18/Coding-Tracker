@@ -120,14 +120,24 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
 
         {/* Dedicated Admin User Management Option */}
         {currentUser?.role === 'admin' && (
-          <li>
-            <div
-              className={`sidebar-link ${pathname === '/admin/users' ? 'active' : ''}`}
-              onClick={() => handleNavigate('/admin/users')}
-            >
-              User Management
-            </div>
-          </li>
+          <>
+            <li>
+              <div
+                className={`sidebar-link ${pathname === '/admin/users' ? 'active' : ''}`}
+                onClick={() => handleNavigate('/admin/users')}
+              >
+                User Management
+              </div>
+            </li>
+            <li>
+              <div
+                className={`sidebar-link ${pathname === '/admin/notes' ? 'active' : ''}`}
+                onClick={() => handleNavigate('/admin/notes')}
+              >
+                Admin Notes
+              </div>
+            </li>
+          </>
         )}
 
         <li>
