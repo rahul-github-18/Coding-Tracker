@@ -19,19 +19,7 @@ export default function Settings({
           </button>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Wandbox API URL</label>
-          <input
-            type="text"
-            className="form-input"
-            value={settings.wandboxUrl}
-            onChange={(e) => handleChange("wandboxUrl", e.target.value)}
-            placeholder="e.g. https://wandbox.org"
-          />
-          <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-            The default is the public <code>https://wandbox.org</code> server, providing free compilation for all languages.
-          </p>
-        </div>
+
 
         <div className="form-group" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
           <div>
