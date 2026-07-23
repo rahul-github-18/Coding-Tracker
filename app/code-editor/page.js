@@ -155,7 +155,9 @@ function CodeEditorContent() {
 
       let codeToSubmit = code;
       if (language === 'java') {
-        codeToSubmit = code.replace(/public\s+class\s+(\w+)/g, 'class $1');
+        codeToSubmit = codeToSubmit
+          .replace(/public\s+class\s+(\w+)/g, 'class $1')
+          .replace(/\b(\w+)\.hasNext(?:Int|Double|Float|Long|Line|Short|Byte|Boolean)?\(\)/g, 'true');
       }
 
       const res = await fetch(wandboxEndpoint, {
