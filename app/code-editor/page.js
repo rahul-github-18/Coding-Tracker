@@ -7,17 +7,17 @@ import Editor from './components/Editor';
 import Settings from './components/Settings';
 
 const STARTER_CODES = {
-  javascript: `// JavaScript Playground\n// You can use standard JavaScript and console.log for output\n\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst num = 10;\nconsole.log(\`Fibonacci number at position \${num} is: \${fibonacci(num)}\`);\n`,
-  python: `# Python 3 Playground\na = int(input("Enter a: "))\nb = int(input("Enter b: "))\nprint(a + b)\n`,
-  cpp: `// C++ Playground\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 0, b = 0;\n    cout << "Enter a: ";\n    if (cin >> a) {\n        cout << "Enter b: ";\n        if (cin >> b) {\n            cout << (a + b) << endl;\n        }\n    }\n    return 0;\n}\n`,
-  c: `// C Playground\n#include <stdio.h>\n\nint main() {\n    int a = 0, b = 0;\n    printf("Enter a: ");\n    if (scanf("%d", &a) == 1) {\n        printf("Enter b: ");\n        if (scanf("%d", &b) == 1) {\n            printf("%d\\n", a + b);\n        }\n    }\n    return 0;\n}\n`,
-  java: `// Java Playground\nimport java.util.*;\n\nclass Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n\n        System.out.print("Enter a: ");\n        int a = sc.nextInt();\n\n        System.out.print("Enter b: ");\n        int b = sc.nextInt();\n\n        System.out.println(a + b);\n    }\n}\n`,
-  typescript: `// TypeScript Playground\nfunction fibonacci(n: number): number {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst num: number = 10;\nconsole.log(\`Fibonacci number at position \${num} is: \${fibonacci(num)}\`);\n`,
-  go: `// Go Playground\npackage main\nimport "fmt"\n\nfunc main() {\n\tvar a, b int\n\tfmt.Print("Enter a: ")\n\tif _, err := fmt.Scan(&a); err == nil {\n\t\tfmt.Print("Enter b: ")\n\t\tif _, err := fmt.Scan(&b); err == nil {\n\t\t\tfmt.Printf("%d\\n", a+b)\n\t\t}\n\t}\n}\n`,
-  rust: `// Rust Playground\nfn main() {\n    println!("Hello from Rust!");\n}\n`,
-  ruby: `# Ruby Playground\nputs "Hello from Ruby!"\n`,
-  php: `<?php\n// PHP Playground\necho "Hello from PHP!\\n";\n`,
-  sql: `-- SQL Playground\nCREATE TABLE developers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  role VARCHAR(50)\n);\n\nINSERT INTO developers VALUES (1, 'Alice', 'Frontend'), (2, 'Bob', 'Backend');\n\nSELECT * FROM developers;\n`
+  javascript: `// JavaScript Playground\nconsole.log("Hello, World!");\n`,
+  python: `# Python 3 Playground\nprint("Hello, World!")\n`,
+  cpp: `// C++ Playground\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n`,
+  c: `// C Playground\n#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n`,
+  java: `// Java Playground\nimport java.util.*;\n\nclass Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n`,
+  typescript: `// TypeScript Playground\nconsole.log("Hello, World!");\n`,
+  go: `// Go Playground\npackage main\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, World!")\n}\n`,
+  rust: `// Rust Playground\nfn main() {\n    println!("Hello, World!");\n}\n`,
+  ruby: `# Ruby Playground\nputs "Hello, World!"\n`,
+  php: `<?php\n// PHP Playground\necho "Hello, World!\\n";\n`,
+  sql: `-- SQL Playground\nSELECT 'Hello, World!' AS greeting;\n`
 };
 
 const COMPILER_MAP = {
