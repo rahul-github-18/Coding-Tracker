@@ -266,7 +266,7 @@ const Login = () => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    alert('Password reset is managed by the administrator. Please contact Rahul Ranjan to reset your password.');
+                    alert('Password reset is managed by the administrator. Please contact the administrator to reset your password.');
                   }}
                   className="text-slate-400 hover:text-slate-200 transition-colors"
                 >
@@ -298,7 +298,7 @@ const Login = () => {
 
       {/* Footer */}
       <footer className="w-full max-w-[960px] border-t border-slate-800/80 pt-5 pb-3 flex items-center justify-between text-xs text-slate-400">
-        <span>Made by <strong className="text-slate-300 font-medium">Rahul Ranjan</strong></span>
+        <span>Copyright © 2026 All Rights Reserved</span>
         <a 
           href="https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/" 
           target="_blank" 

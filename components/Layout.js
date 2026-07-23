@@ -718,7 +718,7 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
             flexWrap: 'wrap',
             textAlign: 'center'
           }}>
-            <span>Made with ❤️ for learners by <strong>Rahul Ranjan</strong></span>
+            <span>Copyright © 2026 All Rights Reserved</span>
             <a
               href="https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/"
               target="_blank"

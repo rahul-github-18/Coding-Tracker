@@ -410,7 +410,7 @@ function TodoDetailContent() {
       addText(`Category: ${topic.category || 'General'} | Difficulty: ${topic.difficulty || 'Easy'}`, 10, false, [128, 128, 128], 4);
       
       // Author details with a clickable LinkedIn link
-      const prefix = "Made with love for learners by Rahul Ranjan | ";
+      const prefix = "Copyright © 2026 All Rights Reserved | ";
       const linkText = "LinkedIn";
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');

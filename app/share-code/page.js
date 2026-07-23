@@ -451,7 +451,7 @@ function ShareCodeContent({ isLoggedIn }) {
 
       {/* Global Footer */}
       <footer className="w-full max-w-[1200px] border-t border-slate-800/80 pt-6 pb-4 mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-400 z-10">
-        <span>Made with ❤️ for learners by <strong>Rahul Ranjan</strong></span>
+        <span>Copyright © 2026 All Rights Reserved</span>
         <a 
           href="https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/" 
           target="_blank" 
