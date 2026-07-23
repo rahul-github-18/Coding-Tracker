@@ -150,14 +150,12 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
         </li>
 
         <li>
-          <a
-            href="https://kodediaryide.vercel.app/"
-            rel="noopener noreferrer"
-            className="sidebar-link"
-            onClick={onClose}
+          <div
+            className={`sidebar-link ${pathname === '/code-editor' ? 'active' : ''}`}
+            onClick={() => handleNavigate('/code-editor')}
           >
             Code Editor
-          </a>
+          </div>
         </li>
 
         <li>
