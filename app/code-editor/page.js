@@ -11,7 +11,7 @@ const STARTER_CODES = {
   python: `# Python 3 Playground\n# You can use standard Python print() for output\n\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\nnum = 10\nprint(f"Fibonacci number at position {num} is: {fibonacci(num)}")\n`,
   cpp: `// C++ Playground\n#include <iostream>\nusing namespace std;\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    int num = 10;\n    cout << "Fibonacci number at position " << num << " is: " << fibonacci(num) << endl;\n    return 0;\n}\n`,
   c: `// C Playground\n#include <stdio.h>\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    int num = 10;\n    printf("Fibonacci number at position %d is: %d\\n", num, fibonacci(num));\n    return 0;\n}\n`,
-  java: `// Java Playground\npublic class Main {\n    public static int fibonacci(int n) {\n        if (n <= 1) return n;\n        return fibonacci(n - 1) + fibonacci(n - 2);\n    }\n\n    public static void main(String[] args) {\n        int num = 10;\n        System.out.println("Fibonacci number at position " + num + " is: " + fibonacci(num));\n    }\n}\n`,
+  java: `// Java Playground\nimport java.util.*;\n\nclass Main {\n    public static int fibonacci(int n) {\n        if (n <= 1) return n;\n        return fibonacci(n - 1) + fibonacci(n - 2);\n    }\n\n    public static void main(String[] args) {\n        int num = 10;\n        System.out.println("Fibonacci number at position " + num + " is: " + fibonacci(num));\n    }\n}\n`,
   typescript: `// TypeScript Playground\nfunction fibonacci(n: number): number {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst num: number = 10;\nconsole.log(\`Fibonacci number at position \${num} is: \${fibonacci(num)}\`);\n`,
   go: `// Go Playground\npackage main\nimport "fmt"\n\nfunc fibonacci(n int) int {\n\tif n <= 1 {\n\t\treturn n\n\t}\n\treturn fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n\tnum := 10\n\tfmt.Printf("Fibonacci number at position %d is: %d\\n", num, fibonacci(num))\n}\n`,
   rust: `// Rust Playground\nfn fibonacci(n: u32) -> u32 {\n    if n <= 1 { return n; }\n    fibonacci(n - 1) + fibonacci(n - 2)\n}\n\nfn main() {\n    let num = 10;\n    println!("Fibonacci number at position {} is: {}", num, fibonacci(num));\n}\n`,
@@ -23,15 +23,16 @@ const STARTER_CODES = {
 const COMPILER_MAP = {
   cpp: "gcc-head",
   c: "gcc-head-c",
-  python: "python-head",
-  javascript: "nodejs-head",
-  typescript: "typescript-head",
-  java: "openjdk-head",
-  go: "go-head",
-  rust: "rust-head",
-  ruby: "ruby-head",
-  php: "php-head",
-  csharp: "dotnet-head"
+  python: "cpython-3.12.7",
+  javascript: "nodejs-20.17.0",
+  typescript: "typescript-5.6.2",
+  java: "openjdk-jdk-22+36",
+  go: "go-1.23.2",
+  rust: "rust-1.82.0",
+  ruby: "ruby-4.0.2",
+  php: "php-8.3.12",
+  sql: "sqlite-3.46.1",
+  csharp: "dotnetcore-8.0.402"
 };
 
 function CodeEditorContent() {
@@ -125,12 +126,17 @@ function CodeEditorContent() {
       const compiler = COMPILER_MAP[language] || "gcc-head";
       const wandboxEndpoint = `${settings.wandboxUrl.replace(/\/$/, '')}/api/compile.json`;
 
+      let codeToSubmit = code;
+      if (language === 'java') {
+        codeToSubmit = code.replace(/public\s+class\s+(\w+)/g, 'class $1');
+      }
+
       const res = await fetch(wandboxEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           compiler: compiler,
-          code: code,
+          code: codeToSubmit,
           stdin: stdin
         })
       });
