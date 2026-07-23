@@ -8,17 +8,17 @@ import Settings from './components/Settings';
 import DockerHelp from './components/DockerHelp';
 
 const STARTER_CODES = {
-  javascript: `// JavaScript Playground\n// You can use standard JavaScript and console.log for output\n\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst num = 10;\nconsole.log(\`Fibonacci number at position \${num} is: \${fibonacci(num)}\`);\n`,
-  python: `# Python 3 Playground\n# You can use standard Python print() for output\n\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\nnum = 10\nprint(f"Fibonacci number at position {num} is: {fibonacci(num)}")\n`,
-  cpp: `// C++ Playground\n#include <iostream>\nusing namespace std;\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    int num = 10;\n    cout << "Fibonacci number at position " << num << " is: " << fibonacci(num) << endl;\n    return 0;\n}\n`,
-  c: `// C Playground\n#include <stdio.h>\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    int num = 10;\n    printf("Fibonacci number at position %d is: %d\\n", num, fibonacci(num));\n    return 0;\n}\n`,
-  java: `// Java Playground\npublic class Main {\n    public static int fibonacci(int n) {\n        if (n <= 1) return n;\n        return fibonacci(n - 1) + fibonacci(n - 2);\n    }\n\n    public static void main(String[] args) {\n        int num = 10;\n        System.out.println("Fibonacci number at position " + num + " is: " + fibonacci(num));\n    }\n}\n`,
-  typescript: `// TypeScript Playground\nfunction fibonacci(n: number): number {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconst num: number = 10;\nconsole.log(\`Fibonacci number at position \${num} is: \${fibonacci(num)}\`);\n`,
-  go: `// Go Playground\npackage main\nimport "fmt"\n\nfunc fibonacci(n int) int {\n\tif n <= 1 {\n\t\treturn n\n\t}\n\treturn fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n\tnum := 10\n\tfmt.Printf("Fibonacci number at position %d is: %d\\n", num, fibonacci(num))\n}\n`,
-  rust: `// Rust Playground\nfn fibonacci(n: u32) -> u32 {\n    if n <= 1 { return n; }\n    fibonacci(n - 1) + fibonacci(n - 2)\n}\n\nfn main() {\n    let num = 10;\n    println!("Fibonacci number at position {} is: {}", num, fibonacci(num));\n}\n`,
-  ruby: `# Ruby Playground\ndef fibonacci(n)\n  return n if n <= 1\n  fibonacci(n - 1) + fibonacci(n - 2)\nend\n\nnum = 10\nputs "Fibonacci number at position #{num} is: #{fibonacci(num)}"\n`,
-  php: `<?php\n// PHP Playground\nfunction fibonacci($n) {\n    if ($n <= 1) return $n;\n    return fibonacci($n - 1) + fibonacci($n - 2);\n}\n\n$num = 10;\necho "Fibonacci number at position {$num} is: " . fibonacci($num) . "\\n";\n`,
-  sql: `-- SQL Playground\nCREATE TABLE developers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  role VARCHAR(50)\n);\n\nINSERT INTO developers VALUES (1, 'Alice', 'Frontend'), (2, 'Bob', 'Backend');\n\nSELECT * FROM developers;\n`
+  javascript: `// JavaScript Code Playground\nconsole.log("Hello from CodeDiary!");\n\nfunction fibonacci(n) {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log("Fibonacci(10):", fibonacci(10));\n`,
+  python: `# Python 3 Code Playground\nprint("Hello from CodeDiary!")\n\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\nprint("Fibonacci(10):", fibonacci(10))\n`,
+  cpp: `// C++ Code Playground\n#include <iostream>\nusing namespace std;\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    cout << "Hello from CodeDiary!" << endl;\n    cout << "Fibonacci(10): " << fibonacci(10) << endl;\n    return 0;\n}\n`,
+  c: `// C Code Playground\n#include <stdio.h>\n\nint fibonacci(int n) {\n    if (n <= 1) return n;\n    return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nint main() {\n    printf("Hello from CodeDiary!\\n");\n    printf("Fibonacci(10): %d\\n", fibonacci(10));\n    return 0;\n}\n`,
+  java: `// Java Code Playground\npublic class Main {\n    public static int fibonacci(int n) {\n        if (n <= 1) return n;\n        return fibonacci(n - 1) + fibonacci(n - 2);\n    }\n\n    public static void main(String[] args) {\n        System.out.println("Hello from CodeDiary!");\n        System.out.println("Fibonacci(10): " + fibonacci(10));\n    }\n}\n`,
+  typescript: `// TypeScript Code Playground\nconst message: string = "Hello from CodeDiary!";\nconsole.log(message);\n\nfunction fibonacci(n: number): number {\n  if (n <= 1) return n;\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}\n\nconsole.log("Fibonacci(10):", fibonacci(10));\n`,
+  go: `// Go Code Playground\npackage main\nimport "fmt"\n\nfunc fibonacci(n int) int {\n\tif n <= 1 {\n\t\treturn n\n\t}\n\treturn fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n\tfmt.Println("Hello from CodeDiary!")\n\tfmt.Printf("Fibonacci(10): %d\\n", fibonacci(10))\n}\n`,
+  rust: `// Rust Code Playground\nfn fibonacci(n: u32) -> u32 {\n    if n <= 1 { return n; }\n    fibonacci(n - 1) + fibonacci(n - 2)\n}\n\nfn main() {\n    println!("Hello from CodeDiary!");\n    println!("Fibonacci(10): {}", fibonacci(10));\n}\n`,
+  ruby: `# Ruby Code Playground\ndef fibonacci(n)\n  return n if n <= 1\n  fibonacci(n - 1) + fibonacci(n - 2)\nend\n\nputs "Hello from CodeDiary!"\nputs "Fibonacci(10): #{fibonacci(10)}"\n`,
+  php: `<?php\n// PHP Code Playground\necho "Hello from CodeDiary!\\n";\n\nfunction fibonacci($n) {\n    if ($n <= 1) return $n;\n    return fibonacci($n - 1) + fibonacci($n - 2);\n}\n\necho "Fibonacci(10): " . fibonacci(10) . "\\n";\n`,
+  sql: `-- SQL Code Playground\nCREATE TABLE developers (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  role VARCHAR(50)\n);\n\nINSERT INTO developers VALUES (1, 'Alice', 'Frontend'), (2, 'Bob', 'Backend');\n\nSELECT * FROM developers;\n`
 };
 
 const COMPILER_MAP = {
@@ -40,6 +40,7 @@ function CodeEditorContent() {
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(STARTER_CODES.javascript);
   const [stdin, setStdin] = useState('');
+  const [showStdin, setShowStdin] = useState(false);
   const [output, setOutput] = useState('');
   const [executionError, setExecutionError] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -66,18 +67,9 @@ function CodeEditorContent() {
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    setCode(STARTER_CODES[newLang] || `// ${newLang} snippet\n`);
-    setOutput('');
-    setExecutionError('');
-    setExecutionTime(null);
-  };
-
-  const handleReset = () => {
-    setCode(STARTER_CODES[language] || '');
-    setStdin('');
-    setOutput('');
-    setExecutionError('');
-    setExecutionTime(null);
+    if (!code || Object.values(STARTER_CODES).includes(code)) {
+      setCode(STARTER_CODES[newLang] || `// ${newLang} snippet\n`);
+    }
   };
 
   const runCodeLocalJS = () => {
@@ -167,59 +159,72 @@ function CodeEditorContent() {
 
   return (
     <Layout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: 'calc(100vh - 130px)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: 'calc(100vh - 140px)' }}>
         
-        {/* Top Control Bar */}
+        {/* Editor Toolbar Header */}
         <div className="card" style={{ padding: '12px 20px', minHeight: 'auto', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <select
-              className="select-control"
-              value={language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: '700', minWidth: '160px' }}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python 3</option>
-              <option value="cpp">C++ (GCC)</option>
-              <option value="c">C (GCC)</option>
-              <option value="java">Java (OpenJDK)</option>
-              <option value="typescript">TypeScript</option>
-              <option value="go">Go</option>
-              <option value="rust">Rust</option>
-              <option value="ruby">Ruby</option>
-              <option value="php">PHP</option>
-              <option value="sql">SQL</option>
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="form-label" style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Language:</span>
+              <select
+                className="select-control"
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                style={{ padding: '6px 12px', fontSize: '0.85rem', fontWeight: '700' }}
+              >
+                <option value="javascript">JavaScript (Node.js)</option>
+                <option value="python">Python 3</option>
+                <option value="cpp">C++ (GCC)</option>
+                <option value="c">C (GCC)</option>
+                <option value="java">Java (OpenJDK)</option>
+                <option value="typescript">TypeScript</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="ruby">Ruby</option>
+                <option value="php">PHP</option>
+                <option value="sql">SQL</option>
+              </select>
+            </div>
 
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-xs font-semibold text-sky-600 dark:text-sky-400">
-              <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
-              Code Diary IDE
-            </span>
+            <button
+              onClick={() => setShowStdin(!showStdin)}
+              className="btn btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600' }}
+            >
+              {showStdin ? 'Hide Stdin' : 'Add Input (stdin)'}
+            </button>
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setShowDockerHelp(true)}
+              className="btn btn-secondary"
+              title="Execution Engines Help"
+              style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>Engines</span>
+            </button>
 
             <button
               onClick={() => setShowSettings(true)}
               className="btn btn-secondary"
-              title="Settings"
-              style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+              title="Editor Settings"
+              style={{ padding: '6px 10px', fontSize: '0.8rem' }}
             >
               ⚙️
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="btn btn-secondary"
-              style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: '700' }}
-            >
-              Reset
             </button>
 
             <button
               onClick={handleRunCode}
               disabled={isRunning}
               className="btn btn-primary"
-              style={{ padding: '8px 20px', fontWeight: '700', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ padding: '6px 18px', fontWeight: '700', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               {isRunning ? (
                 <>
@@ -238,10 +243,25 @@ function CodeEditorContent() {
           </div>
         </div>
 
-        {/* Main Split Layout */}
+        {/* Optional Stdin Panel */}
+        {showStdin && (
+          <div className="card" style={{ padding: '12px 16px', minHeight: 'auto' }}>
+            <label className="form-label" style={{ fontSize: '0.75rem', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Standard Input (stdin)</label>
+            <textarea
+              className="form-input"
+              rows={2}
+              value={stdin}
+              onChange={(e) => setStdin(e.target.value)}
+              placeholder="Enter input values for your program..."
+              style={{ fontFamily: 'monospace', fontSize: '0.85rem', resize: 'vertical' }}
+            />
+          </div>
+        )}
+
+        {/* Main Split Layout: Monaco Editor & Output Console */}
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', minHeight: 0 }}>
           
-          {/* Left Side: Full Height Monaco Code Editor */}
+          {/* Editor Pane */}
           <div className="monaco-wrapper" style={{ height: '100%', borderRadius: '16px' }}>
             <Editor
               language={language}
@@ -253,70 +273,39 @@ function CodeEditorContent() {
             />
           </div>
 
-          {/* Right Side: Split into STDIN (Top) and OUTPUT CONSOLE (Bottom) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%', minHeight: 0 }}>
-            
-            {/* Top Right: Standard Input (STDIN) */}
-            <div className="card" style={{ flex: '0 0 40%', padding: '16px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--link-color)' }}>
-                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-                  <line x1="6" y1="12" x2="10" y2="12"></line>
-                </svg>
-                <h3 style={{ fontSize: '0.85rem', fontWeight: '800', margin: 0, color: 'var(--text-heading)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  STANDARD INPUT (STDIN)
-                </h3>
+          {/* Console Output Pane */}
+          <div className="card" style={{ height: '100%', padding: '16px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: '800', margin: 0, color: 'var(--text-heading)' }}>Output Terminal</h3>
+                {executionTime && (
+                  <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--hover-bg)', color: 'var(--text-muted)' }}>
+                    {executionTime} ms
+                  </span>
+                )}
               </div>
-              <textarea
-                className="form-input"
-                value={stdin}
-                onChange={(e) => setStdin(e.target.value)}
-                placeholder="Provide arguments/input to feed into your program here..."
-                style={{ flex: 1, width: '100%', fontFamily: 'monospace', fontSize: '0.85rem', resize: 'none', border: 'none', background: 'transparent', padding: '4px' }}
-              />
+              <button
+                onClick={() => { setOutput(''); setExecutionError(''); setExecutionTime(null); }}
+                className="btn btn-secondary"
+                style={{ padding: '3px 10px', fontSize: '0.75rem', fontWeight: '600' }}
+              >
+                Clear
+              </button>
             </div>
 
-            {/* Bottom Right: Output Console */}
-            <div className="card" style={{ flex: 1, padding: '16px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid var(--card-border)', paddingBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--link-color)' }}>
-                    <polyline points="4 17 10 11 4 5"></polyline>
-                    <line x1="12" y1="19" x2="20" y2="19"></line>
-                  </svg>
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: '800', margin: 0, color: 'var(--text-heading)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    OUTPUT CONSOLE
-                  </h3>
-                  {executionTime && (
-                    <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'var(--hover-bg)', color: 'var(--text-muted)' }}>
-                      {executionTime} ms
-                    </span>
-                  )}
+            <div style={{ flex: 1, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.5', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'var(--text-color)' }}>
+              {output && <div style={{ color: 'var(--text-color)' }}>{output}</div>}
+              {executionError && (
+                <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', marginTop: '8px' }}>
+                  {executionError}
                 </div>
-                {(output || executionError) && (
-                  <button
-                    onClick={() => { setOutput(''); setExecutionError(''); setExecutionTime(null); }}
-                    className="btn btn-secondary"
-                    style={{ padding: '3px 10px', fontSize: '0.75rem', fontWeight: '600' }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              <div style={{ flex: 1, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.85rem', lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                {output && <div style={{ color: 'var(--text-color)' }}>{output}</div>}
-                {executionError && (
-                  <div style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                    {executionError}
-                  </div>
-                )}
-                {!output && !executionError && !isRunning && (
-                  <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    Click "Run Code" to compile and execute.
-                  </div>
-                )}
-              </div>
+              )}
+              {!output && !executionError && !isRunning && (
+                <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  Click "Run Code" above to execute your code snippet and view terminal output.
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -330,6 +319,11 @@ function CodeEditorContent() {
           onClose={() => setShowSettings(false)}
         />
       )}
+
+      {/* Docker / Execution Engine Help Modal */}
+      {showDockerHelp && (
+        <DockerHelp onClose={() => setShowDockerHelp(false)} />
+      )}
     </Layout>
   );
 }
@@ -338,7 +332,7 @@ export default function CodeEditorPage() {
   return (
     <Suspense fallback={
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--text-muted)' }}>
-        Loading Code Editor...
+        Loading Code Editor Environment...
       </div>
     }>
       <CodeEditorContent />
