@@ -142,29 +142,29 @@ function ShareCodeContent({ isLoggedIn }) {
 
   const cardClassName = isLoggedIn 
     ? "card" 
-    : "border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50 rounded-2xl";
+    : "border border-slate-300/80 bg-white shadow-xl shadow-slate-300/40 rounded-2xl";
 
   const labelClassName = isLoggedIn
     ? "form-label"
-    : "text-xs font-semibold text-slate-700 tracking-wider uppercase";
+    : "text-xs font-bold text-slate-700 tracking-wider uppercase";
 
   const inputClassName = isLoggedIn
     ? "form-input"
-    : "w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-slate-900 placeholder-slate-400 outline-none transition focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15";
+    : "w-full rounded-xl border border-slate-300 bg-slate-100/80 py-3 px-4 text-slate-900 placeholder-slate-500 outline-none transition focus:bg-white focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 font-medium";
 
   const selectClassName = isLoggedIn
     ? "form-input"
-    : "w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-4 text-slate-900 outline-none transition focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15";
+    : "w-full rounded-xl border border-slate-300 bg-slate-100/80 py-2.5 px-4 text-slate-900 outline-none transition focus:bg-white focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 font-medium";
 
   const submitBtnClassName = isLoggedIn
     ? "btn btn-primary"
-    : "w-full rounded-xl bg-sky-600 hover:bg-sky-700 py-3 font-semibold text-white shadow-md shadow-sky-600/20 flex items-center justify-center cursor-pointer transition-all disabled:opacity-50";
+    : "w-full rounded-xl bg-sky-600 hover:bg-sky-700 py-3.5 font-bold text-white shadow-md shadow-sky-600/25 flex items-center justify-center cursor-pointer transition-all disabled:opacity-50 text-sm";
 
   const innerUI = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Tab Navigation buttons */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', margin: '0 auto 16px auto', maxWidth: '360px', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', margin: '0 auto 18px auto', maxWidth: '360px', width: '100%', backgroundColor: isLoggedIn ? 'transparent' : '#cbd5e1', padding: isLoggedIn ? '0' : '4px', borderRadius: '14px' }}>
         <button 
           onClick={() => {
             setActiveTab('share');
@@ -174,18 +174,18 @@ function ShareCodeContent({ isLoggedIn }) {
             flex: 1,
             padding: '8px 16px',
             fontSize: '0.85rem',
-            fontWeight: '600',
-            borderRadius: '12px',
+            fontWeight: '700',
+            borderRadius: '10px',
             border: activeTab === 'share' 
-              ? (isLoggedIn ? '1px solid var(--link-color)' : '1px solid #cbd5e1') 
-              : (isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0'),
+              ? (isLoggedIn ? '1px solid var(--link-color)' : '1px solid #94a3b8') 
+              : 'none',
             backgroundColor: activeTab === 'share' 
               ? (isLoggedIn ? 'rgba(26, 115, 232, 0.12)' : '#ffffff') 
-              : (isLoggedIn ? 'var(--list-item-bg)' : '#f8fafc'),
+              : 'transparent',
             color: activeTab === 'share' 
               ? (isLoggedIn ? 'var(--link-color)' : '#0f172a') 
-              : (isLoggedIn ? 'var(--text-muted)' : '#64748b'),
-            boxShadow: activeTab === 'share' && !isLoggedIn ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              : (isLoggedIn ? 'var(--text-muted)' : '#475569'),
+            boxShadow: activeTab === 'share' && !isLoggedIn ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
             cursor: 'pointer',
             transition: 'all 0.2s',
             display: 'flex',
@@ -204,18 +204,18 @@ function ShareCodeContent({ isLoggedIn }) {
             flex: 1,
             padding: '8px 16px',
             fontSize: '0.85rem',
-            fontWeight: '600',
-            borderRadius: '12px',
+            fontWeight: '700',
+            borderRadius: '10px',
             border: activeTab === 'get' 
-              ? (isLoggedIn ? '1px solid var(--link-color)' : '1px solid #cbd5e1') 
-              : (isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0'),
+              ? (isLoggedIn ? '1px solid var(--link-color)' : '1px solid #94a3b8') 
+              : 'none',
             backgroundColor: activeTab === 'get' 
               ? (isLoggedIn ? 'rgba(26, 115, 232, 0.12)' : '#ffffff') 
-              : (isLoggedIn ? 'var(--list-item-bg)' : '#f8fafc'),
+              : 'transparent',
             color: activeTab === 'get' 
               ? (isLoggedIn ? 'var(--link-color)' : '#0f172a') 
-              : (isLoggedIn ? 'var(--text-muted)' : '#64748b'),
-            boxShadow: activeTab === 'get' && !isLoggedIn ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              : (isLoggedIn ? 'var(--text-muted)' : '#475569'),
+            boxShadow: activeTab === 'get' && !isLoggedIn ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
             cursor: 'pointer',
             transition: 'all 0.2s',
             display: 'flex',
@@ -240,7 +240,7 @@ function ShareCodeContent({ isLoggedIn }) {
 
           <form onSubmit={handleShare} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className={labelClassName} style={{ fontWeight: '600', marginBottom: '6px' }}>Language</label>
+              <label className={labelClassName} style={{ fontWeight: '700', marginBottom: '6px' }}>Language</label>
               <select 
                 value={snippetLanguage} 
                 onChange={(e) => setSnippetLanguage(e.target.value)} 
@@ -248,9 +248,9 @@ function ShareCodeContent({ isLoggedIn }) {
                 style={{ 
                   padding: '10px 14px', 
                   borderRadius: '10px', 
-                  backgroundColor: isLoggedIn ? 'var(--list-item-bg)' : '#f8fafc', 
+                  backgroundColor: isLoggedIn ? 'var(--list-item-bg)' : '#f1f5f9', 
                   color: isLoggedIn ? 'var(--text-color)' : '#0f172a', 
-                  border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0' 
+                  border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #cbd5e1' 
                 }}
               >
                 <option value="javascript">JavaScript</option>
@@ -266,12 +266,12 @@ function ShareCodeContent({ isLoggedIn }) {
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
-              <label className={labelClassName} style={{ fontWeight: '600', marginBottom: '8px' }}>Paste Code</label>
-              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '10px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0' }}>
+              <label className={labelClassName} style={{ fontWeight: '700', marginBottom: '8px' }}>Paste Code</label>
+              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '12px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #cbd5e1' }}>
                 <Editor
                   height="100%"
                   language={snippetLanguage}
-                  theme={isLoggedIn ? "vs-dark" : "vs"}
+                  theme="vs-dark"
                   value={newCode}
                   onChange={(val) => setNewCode(val || '')}
                   options={{
@@ -291,15 +291,15 @@ function ShareCodeContent({ isLoggedIn }) {
               type="submit" 
               className={submitBtnClassName}
               disabled={saving || !newCode.trim()}
-              style={{ padding: '12px 16px', fontWeight: '600', width: '100%', display: 'flex', justifyContent: 'center' }}
+              style={{ padding: '12px 16px', fontWeight: '700', width: '100%', display: 'flex', justifyContent: 'center' }}
             >
               {saving ? 'Generating key...' : 'Share & Generate 4-Digit Code'}
             </button>
           </form>
 
           {generatedShareCode && (
-            <div style={{ marginTop: '12px', padding: '16px', backgroundColor: isLoggedIn ? 'rgba(56, 189, 248, 0.08)' : '#f0f9ff', border: isLoggedIn ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #bae6fd', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: isLoggedIn ? 'var(--text-muted)' : '#0369a1', fontWeight: '600' }}>YOUR 4-DIGIT SHARE CODE</span>
+            <div style={{ marginTop: '12px', padding: '16px', backgroundColor: isLoggedIn ? 'rgba(56, 189, 248, 0.08)' : '#e0f2fe', border: isLoggedIn ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #7dd3fc', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: isLoggedIn ? 'var(--text-muted)' : '#0369a1', fontWeight: '700' }}>YOUR 4-DIGIT SHARE CODE</span>
               <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#0284c7', letterSpacing: '6px' }}>{generatedShareCode}</span>
               <p style={{ fontSize: '0.75rem', color: isLoggedIn ? 'var(--text-muted)' : '#0369a1', margin: 0 }}>Shared code automatically expires in 15 minutes.</p>
               <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
@@ -346,7 +346,7 @@ function ShareCodeContent({ isLoggedIn }) {
               className="btn btn-primary"
               onClick={() => handleRetrieveCode()}
               disabled={retrievalLoading || retrievalKey.length !== 4}
-              style={{ height: '48px', padding: '0 20px', fontWeight: '600', borderRadius: '12px' }}
+              style={{ height: '48px', padding: '0 20px', fontWeight: '700', borderRadius: '12px' }}
             >
               {retrievalLoading ? 'Fetching...' : 'Retrieve'}
             </button>
@@ -355,7 +355,7 @@ function ShareCodeContent({ isLoggedIn }) {
           {retrievalError && <div className="login-error" style={{ margin: 0 }}>{retrievalError}</div>}
 
           {retrievedSnippet && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', backgroundColor: isLoggedIn ? 'var(--list-item-bg)' : '#f8fafc' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', backgroundColor: isLoggedIn ? 'var(--list-item-bg)' : '#f8fafc' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '0.7rem', fontWeight: '600', padding: '2px 6px', backgroundColor: isLoggedIn ? 'var(--btn-secondary-bg)' : '#e2e8f0', borderRadius: '4px', color: isLoggedIn ? 'var(--text-muted)' : '#475569', textTransform: 'uppercase', marginRight: '8px' }}>
@@ -372,11 +372,11 @@ function ShareCodeContent({ isLoggedIn }) {
                 </button>
               </div>
               
-              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '10px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #e2e8f0' }}>
+              <div className="monaco-wrapper" style={{ height: '280px', flex: 'none', borderRadius: '12px', overflow: 'hidden', border: isLoggedIn ? '1px solid var(--card-border)' : '1px solid #cbd5e1' }}>
                 <Editor
                   height="100%"
                   language={retrievedSnippet.language}
-                  theme={isLoggedIn ? "vs-dark" : "vs"}
+                  theme="vs-dark"
                   value={retrievedSnippet.code}
                   options={{
                     readOnly: true,
@@ -411,13 +411,13 @@ function ShareCodeContent({ isLoggedIn }) {
 
   // If not logged in, render a customized standalone public page
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between bg-slate-50 p-4 font-sans select-none relative overflow-hidden text-slate-800">
+    <div className="flex min-h-screen flex-col items-center justify-between bg-slate-100 p-4 font-sans select-none relative overflow-hidden text-slate-900">
       {/* Soft Ambient Background Elements */}
-      <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-sky-200/50 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-200/40 blur-3xl pointer-events-none" />
 
       {/* Standalone Header Navbar */}
-      <div className="w-full max-w-[1200px] flex justify-between items-center z-20 py-4 px-4 border-b border-slate-200/80 mb-6">
+      <div className="w-full max-w-[1200px] flex justify-between items-center z-20 py-4 px-4 border-b border-slate-300/80 mb-6">
         <div 
           onClick={() => router.push('/login')} 
           style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
@@ -450,7 +450,7 @@ function ShareCodeContent({ isLoggedIn }) {
       </div>
 
       {/* Global Footer */}
-      <footer className="w-full max-w-[1200px] border-t border-slate-200/80 pt-6 pb-4 mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 z-10">
+      <footer className="w-full max-w-[1200px] border-t border-slate-300/80 pt-6 pb-4 mt-8 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 z-10">
         <span>Copyright © 2026 All Rights Reserved</span>
         <a 
           href="https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/" 

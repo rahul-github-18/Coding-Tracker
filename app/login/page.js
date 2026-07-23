@@ -54,10 +54,10 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between bg-slate-50 p-4 font-sans select-none text-slate-800 relative overflow-hidden">
+    <div className="flex min-h-screen flex-col items-center justify-between bg-slate-100 p-4 font-sans select-none text-slate-900 relative overflow-hidden">
       {/* Soft Ambient Background Elements */}
-      <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none" />
+      <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-sky-200/50 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-200/40 blur-3xl pointer-events-none" />
 
       {/* Main Content Row */}
       <div className="flex-1 flex items-center justify-center w-full z-10">
@@ -71,7 +71,7 @@ const Login = () => {
             <div className="mb-6">
               <button
                 onClick={() => router.push('/share-code')}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-200 bg-white/90 backdrop-blur-sm text-xs font-medium text-slate-600 hover:text-slate-900 hover:border-sky-300 hover:bg-white transition-all shadow-sm cursor-pointer"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-slate-300 bg-white/90 backdrop-blur-sm text-xs font-medium text-slate-700 hover:text-slate-900 hover:border-sky-400 hover:bg-white transition-all shadow-sm cursor-pointer"
               >
                 <svg className="h-4 w-4 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 3h6v6" />
@@ -89,7 +89,7 @@ const Login = () => {
               <img
                 src="/logo.png"
                 alt="CodeDiary Logo"
-                className="h-9 w-9 rounded-xl object-contain bg-white p-1 border border-slate-200 shadow-sm"
+                className="h-9 w-9 rounded-xl object-contain bg-white p-1 border border-slate-300 shadow-sm"
               />
               <span className="text-slate-900 font-bold text-base tracking-tight">Code Diary</span>
             </div>
@@ -104,15 +104,15 @@ const Login = () => {
             
             {/* Minimal Feature Tags */}
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-medium text-slate-700 shadow-xs">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-300/80 text-xs font-semibold text-slate-700 shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-sky-500"></span>
                 Topics & Curriculum
               </span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-medium text-slate-700 shadow-xs">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-300/80 text-xs font-semibold text-slate-700 shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                 Code Snippets
               </span>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-medium text-slate-700 shadow-xs">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-300/80 text-xs font-semibold text-slate-700 shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Activity Metrics
               </span>
@@ -120,7 +120,7 @@ const Login = () => {
           </div>
 
           {/* Right Side: The Login Card */}
-          <div className="w-full max-w-[400px] rounded-2xl border border-slate-200/90 bg-white p-7 shadow-xl shadow-slate-200/50 backdrop-blur-sm">
+          <div className="w-full max-w-[400px] rounded-2xl border border-slate-300/80 bg-white p-7 shadow-xl shadow-slate-300/40 backdrop-blur-sm">
             {/* Card Header */}
             <div className="text-left mb-6">
               <h2 className="text-xl font-bold text-slate-900">
@@ -132,10 +132,10 @@ const Login = () => {
             </div>
 
             {/* Mode Selector Tabs */}
-            <div className="flex rounded-xl bg-slate-100 p-1 mb-6 border border-slate-200/60 text-xs font-medium">
+            <div className="flex rounded-xl bg-slate-200/80 p-1 mb-6 border border-slate-300/80 text-xs font-medium">
               <button
                 type="button"
-                className={`flex-1 rounded-lg py-1.5 text-center transition-all cursor-pointer ${!isRegisterMode ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-500 hover:text-slate-900'}`}
+                className={`flex-1 rounded-lg py-1.5 text-center transition-all cursor-pointer ${!isRegisterMode ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'}`}
                 onClick={() => {
                   setIsRegisterMode(false);
                   setError('');
@@ -146,7 +146,7 @@ const Login = () => {
               </button>
               <button
                 type="button"
-                className={`flex-1 rounded-lg py-1.5 text-center transition-all cursor-pointer ${isRegisterMode ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-500 hover:text-slate-900'}`}
+                className={`flex-1 rounded-lg py-1.5 text-center transition-all cursor-pointer ${isRegisterMode ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'}`}
                 onClick={() => {
                   setIsRegisterMode(true);
                   setError('');
@@ -180,13 +180,13 @@ const Login = () => {
             {/* Login/Register Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700" htmlFor="username">
+                <label className="text-xs font-bold text-slate-700" htmlFor="username">
                   Username
                 </label>
                 <input
                   type="text"
                   id="username"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 px-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-100/80 py-2.5 px-3.5 text-sm text-slate-900 placeholder-slate-500 outline-none transition focus:bg-white focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 font-medium"
                   placeholder={isRegisterMode ? "Choose a username" : "Enter username"}
                   value={username}
                   onChange={(e) => {
@@ -199,14 +199,14 @@ const Login = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700" htmlFor="password">
+                <label className="text-xs font-bold text-slate-700" htmlFor="password">
                   Password
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="password"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-100/80 py-2.5 pl-3.5 pr-10 text-sm text-slate-900 placeholder-slate-500 outline-none transition focus:bg-white focus:border-sky-600 focus:ring-2 focus:ring-sky-600/20 font-medium"
                     placeholder={isRegisterMode ? "Choose a password" : "Enter password"}
                     value={password}
                     onChange={(e) => {
@@ -259,7 +259,7 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="w-full mt-2 rounded-xl bg-sky-600 hover:bg-sky-700 py-2.5 font-semibold text-sm text-white shadow-md shadow-sky-600/20 transition duration-150 cursor-pointer disabled:opacity-50"
+                className="w-full mt-2 rounded-xl bg-sky-600 hover:bg-sky-700 py-3 font-bold text-sm text-white shadow-md shadow-sky-600/25 transition duration-150 cursor-pointer disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? (
@@ -280,7 +280,7 @@ const Login = () => {
       </div>
 
       {/* Clean Light Footer */}
-      <footer className="w-full max-w-[960px] border-t border-slate-200/80 pt-5 pb-3 flex items-center justify-between text-xs text-slate-500 z-10">
+      <footer className="w-full max-w-[960px] border-t border-slate-300/80 pt-5 pb-3 flex items-center justify-between text-xs text-slate-500 z-10">
         <span>Copyright © 2026 All Rights Reserved</span>
         <a 
           href="https://www.linkedin.com/in/rahul-ranjan-6b2ab424a/" 
