@@ -58,7 +58,7 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
   }, [fetchUserNotifications]);
 
   // Theme State
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // PDF Preview States
@@ -69,7 +69,7 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
   // Sync theme class to document body
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const isDark = savedTheme !== 'light';
+    const isDark = savedTheme === 'dark';
     setIsDarkMode(isDark);
     if (isDark) {
       document.body.classList.add('dark-theme');
