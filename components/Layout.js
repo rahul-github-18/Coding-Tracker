@@ -275,7 +275,7 @@ const Layout = ({ children, searchQuery, setSearchQuery }) => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img
-                src="/logo.png"
+                src={isDarkMode ? "/dark-logo.png" : "/light-logo.png"}
                 alt="CodeDiary Logo"
                 style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '6px' }}
               />

@@ -85,7 +85,7 @@ const Sidebar = memo(({ onExportPDF, isDarkMode, toggleTheme, isOpen, onClose })
       <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', textDecoration: 'none' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img
-            src="/logo.png"
+            src={isDarkMode ? "/dark-logo.png" : "/light-logo.png"}
             alt="CodeDiary Logo"
             style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px' }}
           />

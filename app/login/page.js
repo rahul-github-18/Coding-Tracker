@@ -87,7 +87,7 @@ const Login = () => {
             {/* Brand Logo & Name */}
             <div className="flex items-center gap-3 mb-4">
               <img
-                src="/logo.png"
+                src="/light-logo.png"
                 alt="CodeDiary Logo"
                 className="h-9 w-9 rounded-xl object-contain bg-white p-1 border border-slate-300 shadow-sm"
               />
